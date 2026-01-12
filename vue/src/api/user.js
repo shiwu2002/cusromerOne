@@ -27,10 +27,11 @@ export const getUserById = (id) => {
 }
 
 // 查询所有用户
-export const getUserList = () => {
+export const getUserList = (params) => {
   return request({
     url: '/api/user/list',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -52,18 +53,18 @@ export const searchUsers = (params) => {
 }
 
 // 更新用户信息
-export const updateUser = (data) => {
+export const updateUser = (id, data) => {
   return request({
-    url: '/api/user',
+    url: `/api/user/${id}`,
     method: 'put',
     data
   })
 }
 
 // 更新用户状态
-export const updateUserStatus = (data) => {
+export const updateUserStatus = (id, data) => {
   return request({
-    url: '/api/user/status',
+    url: `/api/user/${id}/status`,
     method: 'put',
     data
   })
@@ -79,11 +80,10 @@ export const updatePassword = (data) => {
 }
 
 // 重置用户密码
-export const resetPassword = (data) => {
+export const resetPassword = (id) => {
   return request({
-    url: '/api/user/reset-password',
-    method: 'put',
-    data
+    url: `/api/user/${id}/reset-password`,
+    method: 'put'
   })
 }
 

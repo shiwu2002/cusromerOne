@@ -28,14 +28,13 @@
           </el-form-item>
           <el-form-item label="角色">
             <el-select
-              v-model="searchForm.role"
+              v-model="searchForm.userType"
               placeholder="请选择角色"
               clearable
               @change="handleSearch"
             >
-              <el-option label="管理员" value="admin" />
-              <el-option label="教师" value="teacher" />
-              <el-option label="学生" value="student" />
+              <el-option label="学生" :value="0" />
+              <el-option label="教师/管理员" :value="1" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -55,22 +54,25 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="role" label="角色" width="100">
+        <el-table-column prop="realName" label="姓名" width="100" />
+        <el-table-column prop="userType" label="角色" width="100">
           <template #default="{ row }">
-            <el-tag :type="getRoleType(row.role)" size="small">
-              {{ getRoleText(row.role) }}
+            <el-tag :type="getUserTypeTag(row.userType)" size="small">
+              {{ getUserTypeText(row.userType) }}
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="college" label="学院" width="150" />
+        <el-table-column prop="major" label="专业" width="120" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
-              {{ row.status === 'active' ? '正常' : '禁用' }}
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+              {{ row.status === 1 ? '正常' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" fixed="right" width="280">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
@@ -78,11 +80,11 @@
               重置密码
             </el-button>
             <el-button
-              :type="row.status === 'active' ? 'danger' : 'success'"
+              :type="row.status === 1 ? 'danger' : 'success'"
               size="small"
               @click="handleToggleStatus(row)"
             >
-              {{ row.status === 'active' ? '禁用' : '启用' }}
+              {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
           </template>
         </el-table-column>
@@ -124,11 +126,10 @@
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="formData.phone" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="formData.role" placeholder="请选择角色">
-            <el-option label="管理员" value="admin" />
-            <el-option label="教师" value="teacher" />
-            <el-option label="学生" value="student" />
+        <el-form-item label="角色" prop="userType">
+          <el-select v-model="formData.userType" placeholder="请选择角色">
+            <el-option label="学生" :value="0" />
+            <el-option label="教师/管理员" :value="1" />
           </el-select>
         </el-form-item>
         <el-form-item label="姓名" prop="realName">
@@ -166,7 +167,7 @@ const formRef = ref(null)
 const searchForm = reactive({
   username: '',
   email: '',
-  role: ''
+  userType: null
 })
 
 const pagination = reactive({
@@ -182,8 +183,10 @@ const formData = reactive({
   username: '',
   email: '',
   phone: '',
-  role: '',
-  realName: ''
+  userType: null,
+  realName: '',
+  college: '',
+  major: ''
 })
 
 const formRules = {
@@ -195,27 +198,28 @@ const formRules = {
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
-  role: [
+  userType: [
     { required: true, message: '请选择角色', trigger: 'change' }
+  ],
+  realName: [
+    { required: true, message: '请输入姓名', trigger: 'blur' }
   ]
 }
 
-const getRoleType = (role) => {
+const getUserTypeTag = (userType) => {
   const typeMap = {
-    admin: 'danger',
-    teacher: 'warning',
-    student: ''
+    0: '',
+    1: 'warning'
   }
-  return typeMap[role] || ''
+  return typeMap[userType] || 'info'
 }
 
-const getRoleText = (role) => {
+const getUserTypeText = (userType) => {
   const textMap = {
-    admin: '管理员',
-    teacher: '教师',
-    student: '学生'
+    0: '学生',
+    1: '教师/管理员'
   }
-  return textMap[role] || role
+  return textMap[userType] || '未知'
 }
 
 const loadUserList = async () => {
@@ -226,8 +230,10 @@ const loadUserList = async () => {
       pageSize: pagination.pageSize
     }
     const res = await getUserList(params)
-    userList.value = res.data.list || []
-    pagination.total = res.data.total || 0
+    // API返回的data直接是数组
+    userList.value = res.data || []
+    // 如果API返回的是数组，总数就是数组长度
+    pagination.total = res.data?.length || 0
   } catch (error) {
     ElMessage.error('加载用户列表失败')
   } finally {
@@ -244,8 +250,9 @@ const handleSearch = async () => {
       ...searchForm
     }
     const res = await searchUsers(params)
-    userList.value = res.data.list || []
-    pagination.total = res.data.total || 0
+    // API返回的data直接是数组
+    userList.value = res.data || []
+    pagination.total = res.data?.length || 0
   } catch (error) {
     ElMessage.error('搜索用户失败')
   } finally {
@@ -256,7 +263,7 @@ const handleSearch = async () => {
 const handleReset = () => {
   searchForm.username = ''
   searchForm.email = ''
-  searchForm.role = ''
+  searchForm.userType = null
   pagination.page = 1
   loadUserList()
 }
@@ -269,8 +276,10 @@ const handleEdit = (row) => {
     username: row.username,
     email: row.email,
     phone: row.phone,
-    role: row.role,
-    realName: row.realName
+    userType: row.userType,
+    realName: row.realName,
+    college: row.college,
+    major: row.major
   })
   dialogVisible.value = true
 }
@@ -302,8 +311,10 @@ const handleDialogClose = () => {
     username: '',
     email: '',
     phone: '',
-    role: '',
-    realName: ''
+    userType: null,
+    realName: '',
+    college: '',
+    major: ''
   })
 }
 
@@ -327,8 +338,8 @@ const handleResetPassword = (row) => {
 }
 
 const handleToggleStatus = (row) => {
-  const newStatus = row.status === 'active' ? 'inactive' : 'active'
-  const action = newStatus === 'active' ? '启用' : '禁用'
+  const newStatus = row.status === 1 ? 0 : 1
+  const action = newStatus === 1 ? '启用' : '禁用'
   
   ElMessageBox.confirm(
     `确定要${action}用户 ${row.username} 吗？`,
