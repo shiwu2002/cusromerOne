@@ -58,16 +58,14 @@
         stripe
       >
         <el-table-column prop="id" label="预约ID" width="80" />
-        <el-table-column prop="username" label="预约用户" width="120" />
-        <el-table-column prop="laboratory_name" label="实验室" width="150" />
-        <el-table-column prop="reservation_date" label="预约日期" width="120" />
-        <el-table-column label="预约时间" width="180">
-          <template #default="scope">
-            {{ scope.row.start_time }} - {{ scope.row.end_time }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="purpose" label="预约目的" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="申请时间" width="180" />
+        <el-table-column prop="userName" label="预约用户" width="120" />
+        <el-table-column prop="labName" label="实验室" width="180" />
+        <el-table-column prop="experimentName" label="实验名称" width="150" show-overflow-tooltip />
+        <el-table-column prop="reserveDate" label="预约日期" width="120" />
+        <el-table-column prop="timeSlot" label="预约时间" width="150" />
+        <el-table-column prop="purpose" label="预约目的" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="peopleNum" label="人数" width="80" align="center" />
+        <el-table-column prop="createTime" label="申请时间" width="180" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button 
@@ -112,10 +110,11 @@
       <el-form :model="rejectForm" :rules="rejectRules" ref="rejectFormRef" label-width="100px">
         <el-form-item label="预约信息">
           <div class="reject-info">
-            <p><strong>用户：</strong>{{ currentReservation?.username }}</p>
-            <p><strong>实验室：</strong>{{ currentReservation?.laboratory_name }}</p>
-            <p><strong>日期：</strong>{{ currentReservation?.reservation_date }}</p>
-            <p><strong>时间：</strong>{{ currentReservation?.start_time }} - {{ currentReservation?.end_time }}</p>
+            <p><strong>用户：</strong>{{ currentReservation?.userName }}</p>
+            <p><strong>实验室：</strong>{{ currentReservation?.labName }}</p>
+            <p><strong>实验名称：</strong>{{ currentReservation?.experimentName }}</p>
+            <p><strong>日期：</strong>{{ currentReservation?.reserveDate }}</p>
+            <p><strong>时间：</strong>{{ currentReservation?.timeSlot }}</p>
           </div>
         </el-form-item>
         <el-form-item label="拒绝原因" prop="reason">
@@ -186,23 +185,29 @@ const loadData = async () => {
   try {
     let params = {
       page: currentPage.value,
-      page_size: pageSize.value
+      pageSize: pageSize.value
     }
 
     // 如果有搜索条件，使用搜索接口
     if (searchForm.username || searchForm.laboratoryName || searchForm.dateRange) {
       params = {
         ...params,
-        username: searchForm.username || undefined,
-        laboratory_name: searchForm.laboratoryName || undefined,
-        start_date: searchForm.dateRange?.[0] || undefined,
-        end_date: searchForm.dateRange?.[1] || undefined
+        userName: searchForm.username || undefined,
+        labName: searchForm.laboratoryName || undefined,
+        startDate: searchForm.dateRange?.[0] || undefined,
+        endDate: searchForm.dateRange?.[1] || undefined
       }
     }
 
     const res = await getPendingReservations(params)
-    tableData.value = res.data.reservations
-    total.value = res.data.total
+    // 处理API返回的数据，过滤出待审核状态（status=0）的预约
+    if (Array.isArray(res.data)) {
+      tableData.value = res.data.filter(item => item.status === 0)
+      total.value = tableData.value.length
+    } else {
+      tableData.value = res.data.reservations || res.data.list || []
+      total.value = res.data.total || 0
+    }
   } catch (error) {
     ElMessage.error(error.message || '获取待审核预约列表失败')
   } finally {
@@ -241,7 +246,7 @@ const handleCurrentChange = (val) => {
 const handleApprove = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确认批准用户 ${row.username} 在 ${row.reservation_date} ${row.start_time}-${row.end_time} 对 ${row.laboratory_name} 的预约申请？`,
+      `确认批准用户 ${row.userName} 在 ${row.reserveDate} ${row.timeSlot} 对 ${row.labName} 的预约申请？`,
       '批准确认',
       {
         confirmButtonText: '确认批准',

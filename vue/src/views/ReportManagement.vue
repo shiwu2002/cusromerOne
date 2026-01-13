@@ -34,7 +34,7 @@
                 <el-option
                   v-for="lab in laboratories"
                   :key="lab.id"
-                  :label="lab.name"
+                  :label="lab.labName || lab.name"
                   :value="lab.id"
                 />
               </el-select>
@@ -46,11 +46,10 @@
                 clearable
                 style="width: 100%"
               >
-                <el-option label="待审核" value="pending" />
-                <el-option label="已批准" value="approved" />
-                <el-option label="已拒绝" value="rejected" />
-                <el-option label="已取消" value="cancelled" />
-                <el-option label="已完成" value="completed" />
+                <el-option label="待审核" :value="0" />
+                <el-option label="已批准" :value="1" />
+                <el-option label="已拒绝" :value="2" />
+                <el-option label="已取消" :value="3" />
               </el-select>
             </el-form-item>
             <el-form-item label="用户名">
@@ -139,7 +138,7 @@
                 <el-option
                   v-for="lab in laboratories"
                   :key="lab.id"
-                  :label="lab.name"
+                  :label="lab.labName || lab.name"
                   :value="lab.id"
                 />
               </el-select>
@@ -266,6 +265,15 @@ const userStore = useUserStore()
 const laboratories = ref([])
 const users = ref([])
 
+// 状态映射：将字符串状态转换为整数
+const statusMap = {
+  'pending': 0,
+  'approved': 1,
+  'rejected': 2,
+  'cancelled': 3,
+  'completed': 4
+}
+
 // 预约报表表单
 const reservationForm = reactive({
   dateRange: null,
@@ -295,9 +303,15 @@ const loadingHistory = ref(false)
 // 加载实验室列表
 const loadLaboratories = async () => {
   try {
-    const res = await getLaboratoryList({ page: 1, page_size: 1000 })
-    laboratories.value = res.data.laboratories
+    const res = await getLaboratoryList({ page: 1, pageSize: 1000 })
+    // 处理API返回的数据，兼容多种数据结构
+    if (Array.isArray(res.data)) {
+      laboratories.value = res.data
+    } else {
+      laboratories.value = res.data.laboratories || res.data.list || []
+    }
   } catch (error) {
+    console.error('获取实验室列表失败:', error)
     ElMessage.error(error.message || '获取实验室列表失败')
   }
 }
@@ -305,9 +319,15 @@ const loadLaboratories = async () => {
 // 加载用户列表
 const loadUsers = async () => {
   try {
-    const res = await getUserList({ page: 1, page_size: 1000 })
-    users.value = res.data.users
+    const res = await getUserList({ page: 1, pageSize: 1000 })
+    // 处理API返回的数据，兼容多种数据结构
+    if (Array.isArray(res.data)) {
+      users.value = res.data
+    } else {
+      users.value = res.data.users || res.data.list || []
+    }
   } catch (error) {
+    console.error('获取用户列表失败:', error)
     ElMessage.error(error.message || '获取用户列表失败')
   }
 }
@@ -337,7 +357,7 @@ const handleExportReservations = async () => {
       start_date: reservationForm.dateRange[0],
       end_date: reservationForm.dateRange[1],
       laboratory_id: reservationForm.laboratoryId || undefined,
-      status: reservationForm.status || undefined,
+      status: reservationForm.status !== '' && reservationForm.status !== null ? reservationForm.status : undefined,
       username: reservationForm.username || undefined,
       format: reservationForm.format
     }

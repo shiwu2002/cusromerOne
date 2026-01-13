@@ -12,14 +12,14 @@
         <el-form :inline="true" :model="searchForm" class="search-form">
           <el-form-item label="用户名">
             <el-input
-              v-model="searchForm.username"
+              v-model="searchForm.userName"
               placeholder="请输入用户名"
               clearable
             />
           </el-form-item>
           <el-form-item label="实验室">
             <el-input
-              v-model="searchForm.laboratoryName"
+              v-model="searchForm.labName"
               placeholder="请输入实验室名称"
               clearable
             />
@@ -30,11 +30,10 @@
               placeholder="请选择状态"
               clearable
             >
-              <el-option label="待审核" value="pending" />
-              <el-option label="已批准" value="approved" />
-              <el-option label="已拒绝" value="rejected" />
-              <el-option label="已取消" value="cancelled" />
-              <el-option label="已完成" value="completed" />
+              <el-option label="待审核" :value="0" />
+              <el-option label="已批准" :value="1" />
+              <el-option label="已拒绝" :value="2" />
+              <el-option label="已取消" :value="3" />
             </el-select>
           </el-form-item>
           <el-form-item label="预约日期">
@@ -62,10 +61,12 @@
         style="width: 100%"
       >
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户" width="120" />
-        <el-table-column prop="laboratoryName" label="实验室" width="180" />
-        <el-table-column prop="date" label="预约日期" width="120" />
-        <el-table-column prop="timeslot" label="时间段" width="150" />
+        <el-table-column prop="userName" label="用户" width="120" />
+        <el-table-column prop="labName" label="实验室" width="180" />
+        <el-table-column prop="experimentName" label="实验名称" width="150" />
+        <el-table-column prop="reserveDate" label="预约日期" width="120" />
+        <el-table-column prop="timeSlot" label="时间段" width="150" />
+        <el-table-column prop="peopleNum" label="人数" width="80" />
         <el-table-column prop="purpose" label="预约目的" min-width="200" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -74,20 +75,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" fixed="right" width="200">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleView(row)">详情</el-button>
             <el-button
-              v-if="row.status === 'approved'"
-              type="success"
-              size="small"
-              @click="handleComplete(row)"
-            >
-              完成
-            </el-button>
-            <el-button
-              v-if="['pending', 'approved'].includes(row.status)"
+              v-if="row.status === 1"
               type="danger"
               size="small"
               @click="handleCancel(row)"
@@ -128,40 +121,28 @@
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="用户">
-          {{ detailData.username }}
-        </el-descriptions-item>
-        <el-descriptions-item label="用户邮箱">
-          {{ detailData.userEmail }}
+          {{ detailData.userName }}
         </el-descriptions-item>
         <el-descriptions-item label="实验室">
-          {{ detailData.laboratoryName }}
+          {{ detailData.labName }}
         </el-descriptions-item>
-        <el-descriptions-item label="实验室位置">
-          {{ detailData.laboratoryLocation }}
+        <el-descriptions-item label="实验名称">
+          {{ detailData.experimentName }}
         </el-descriptions-item>
         <el-descriptions-item label="预约日期">
-          {{ detailData.date }}
+          {{ detailData.reserveDate }}
         </el-descriptions-item>
         <el-descriptions-item label="时间段">
-          {{ detailData.timeslot }}
+          {{ detailData.timeSlot }}
         </el-descriptions-item>
         <el-descriptions-item label="参与人数">
-          {{ detailData.participants }}
+          {{ detailData.peopleNum }}
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">
-          {{ detailData.createdAt }}
+          {{ detailData.createTime }}
         </el-descriptions-item>
         <el-descriptions-item label="预约目的" :span="2">
           {{ detailData.purpose }}
-        </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.approver" label="审核人">
-          {{ detailData.approver }}
-        </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.approvedAt" label="审核时间">
-          {{ detailData.approvedAt }}
-        </el-descriptions-item>
-        <el-descriptions-item v-if="detailData.rejectReason" label="拒绝原因" :span="2">
-          {{ detailData.rejectReason }}
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
@@ -186,8 +167,8 @@ const loading = ref(false)
 const detailVisible = ref(false)
 
 const searchForm = reactive({
-  username: '',
-  laboratoryName: '',
+  userName: '',
+  labName: '',
   status: '',
   dateRange: []
 })
@@ -203,22 +184,20 @@ const detailData = ref({})
 
 const getStatusType = (status) => {
   const typeMap = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'danger',
-    cancelled: 'info',
-    completed: ''
+    0: 'warning',
+    1: 'success',
+    2: 'danger',
+    3: 'info'
   }
   return typeMap[status] || ''
 }
 
 const getStatusText = (status) => {
   const textMap = {
-    pending: '待审核',
-    approved: '已批准',
-    rejected: '已拒绝',
-    cancelled: '已取消',
-    completed: '已完成'
+    0: '待审核',
+    1: '已批准',
+    2: '已拒绝',
+    3: '已取消'
   }
   return textMap[status] || status
 }
@@ -226,15 +205,14 @@ const getStatusText = (status) => {
 const loadReservationList = async () => {
   loading.value = true
   try {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
+    const res = await getReservationList()
+    if (Array.isArray(res.data)) {
+      reservationList.value = res.data
+      pagination.total = res.data.length
+    } else {
+      reservationList.value = []
+      pagination.total = 0
     }
-    const res = await getReservationList(params)
-    reservationList.value = res.data.list || []
-    pagination.total = res.data.total || 0
   } catch (error) {
     ElMessage.error('加载预约列表失败')
   } finally {
@@ -245,30 +223,39 @@ const loadReservationList = async () => {
 const handleSearch = async () => {
   loading.value = true
   try {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
+    const res = await getReservationList()
+    if (Array.isArray(res.data)) {
+      let filteredData = res.data
+      
+      // 按条件过滤
+      if (searchForm.userName) {
+        filteredData = filteredData.filter(item => 
+          item.userName && item.userName.includes(searchForm.userName)
+        )
+      }
+      if (searchForm.labName) {
+        filteredData = filteredData.filter(item => 
+          item.labName && item.labName.includes(searchForm.labName)
+        )
+      }
+      if (searchForm.status !== '' && searchForm.status !== null) {
+        filteredData = filteredData.filter(item => item.status === searchForm.status)
+      }
+      if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+        const [startDate, endDate] = searchForm.dateRange
+        filteredData = filteredData.filter(item => {
+          if (!item.reserveDate) return false
+          const reserveDate = item.reserveDate.split('T')[0]
+          return reserveDate >= startDate && reserveDate <= endDate
+        })
+      }
+      
+      reservationList.value = filteredData
+      pagination.total = filteredData.length
+    } else {
+      reservationList.value = []
+      pagination.total = 0
     }
-    
-    if (searchForm.username) {
-      params.username = searchForm.username
-    }
-    if (searchForm.laboratoryName) {
-      params.laboratoryName = searchForm.laboratoryName
-    }
-    if (searchForm.status) {
-      params.status = searchForm.status
-    }
-    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
-      params.startDate = searchForm.dateRange[0]
-      params.endDate = searchForm.dateRange[1]
-    }
-    
-    const res = await searchReservations(params)
-    reservationList.value = res.data.list || []
-    pagination.total = res.data.total || 0
   } catch (error) {
     ElMessage.error('搜索预约失败')
   } finally {
@@ -277,8 +264,8 @@ const handleSearch = async () => {
 }
 
 const handleReset = () => {
-  searchForm.username = ''
-  searchForm.laboratoryName = ''
+  searchForm.userName = ''
+  searchForm.labName = ''
   searchForm.status = ''
   searchForm.dateRange = []
   pagination.page = 1
@@ -293,26 +280,6 @@ const handleView = async (row) => {
   } catch (error) {
     ElMessage.error('加载预约详情失败')
   }
-}
-
-const handleComplete = (row) => {
-  ElMessageBox.confirm(
-    `确定要将预约 ${row.id} 标记为已完成吗？`,
-    '确认操作',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'success'
-    }
-  ).then(async () => {
-    try {
-      await completeReservation(row.id)
-      ElMessage.success('预约已完成')
-      loadReservationList()
-    } catch (error) {
-      ElMessage.error('操作失败')
-    }
-  }).catch(() => {})
 }
 
 const handleCancel = (row) => {

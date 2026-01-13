@@ -4,7 +4,10 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const service = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
-  timeout: 15000
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // 请求拦截器
@@ -27,6 +30,12 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
+    
+    // 检查是否为 Blob 对象（文件下载）
+    if (res instanceof Blob) {
+      console.log('检测到 Blob 响应，直接返回')
+      return res
+    }
     
     console.log('=== 响应拦截器调试 ===')
     console.log('response.status:', response.status)

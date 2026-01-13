@@ -10,18 +10,10 @@
       <!-- 搜索和操作栏 -->
       <div class="toolbar">
         <el-form :inline="true" :model="searchForm" class="search-form">
-          <el-form-item label="用户名">
+          <el-form-item label="关键字">
             <el-input
-              v-model="searchForm.username"
-              placeholder="请输入用户名"
-              clearable
-              @clear="handleSearch"
-            />
-          </el-form-item>
-          <el-form-item label="邮箱">
-            <el-input
-              v-model="searchForm.email"
-              placeholder="请输入邮箱"
+              v-model="searchForm.keyword"
+              placeholder="请输入用户名/姓名/手机号"
               clearable
               @clear="handleSearch"
             />
@@ -34,7 +26,9 @@
               @change="handleSearch"
             >
               <el-option label="学生" :value="0" />
-              <el-option label="教师/管理员" :value="1" />
+              <el-option label="教师" :value="1" />
+              <el-option label="管理员" :value="2" />
+              <el-option label="超级管理员" :value="3" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -129,7 +123,9 @@
         <el-form-item label="角色" prop="userType">
           <el-select v-model="formData.userType" placeholder="请选择角色">
             <el-option label="学生" :value="0" />
-            <el-option label="教师/管理员" :value="1" />
+            <el-option label="教师" :value="1" />
+            <el-option label="管理员" :value="2" />
+            <el-option label="超级管理员" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="姓名" prop="realName">
@@ -165,8 +161,7 @@ const isEdit = ref(false)
 const formRef = ref(null)
 
 const searchForm = reactive({
-  username: '',
-  email: '',
+  keyword: '',
   userType: null
 })
 
@@ -209,7 +204,9 @@ const formRules = {
 const getUserTypeTag = (userType) => {
   const typeMap = {
     0: '',
-    1: 'warning'
+    1: 'warning',
+    2: 'success',
+    3: 'danger'
   }
   return typeMap[userType] || 'info'
 }
@@ -217,7 +214,9 @@ const getUserTypeTag = (userType) => {
 const getUserTypeText = (userType) => {
   const textMap = {
     0: '学生',
-    1: '教师/管理员'
+    1: '教师',
+    2: '管理员',
+    3: '超级管理员'
   }
   return textMap[userType] || '未知'
 }
@@ -244,15 +243,20 @@ const loadUserList = async () => {
 const handleSearch = async () => {
   loading.value = true
   try {
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      ...searchForm
-    }
+    const params = {}
+    // 只添加有值的搜索参数
+    if (searchForm.keyword) params.keyword = searchForm.keyword
+    if (searchForm.userType !== null && searchForm.userType !== '') params.userType = searchForm.userType
+    
     const res = await searchUsers(params)
-    // API返回的data直接是数组
-    userList.value = res.data || []
-    pagination.total = res.data?.length || 0
+    // 统一处理响应数据格式
+    if (Array.isArray(res.data)) {
+      userList.value = res.data
+      pagination.total = res.data.length
+    } else {
+      userList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
   } catch (error) {
     ElMessage.error('搜索用户失败')
   } finally {
@@ -261,8 +265,7 @@ const handleSearch = async () => {
 }
 
 const handleReset = () => {
-  searchForm.username = ''
-  searchForm.email = ''
+  searchForm.keyword = ''
   searchForm.userType = null
   pagination.page = 1
   loadUserList()
@@ -351,7 +354,7 @@ const handleToggleStatus = (row) => {
     }
   ).then(async () => {
     try {
-      await updateUserStatus(row.id, { status: newStatus })
+      await updateUserStatus(row.id, newStatus)
       ElMessage.success(`${action}成功`)
       loadUserList()
     } catch (error) {

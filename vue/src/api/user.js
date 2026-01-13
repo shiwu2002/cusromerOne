@@ -62,11 +62,14 @@ export const updateUser = (id, data) => {
 }
 
 // 更新用户状态
-export const updateUserStatus = (id, data) => {
+export const updateUserStatus = (userId, status) => {
   return request({
-    url: `/api/user/${id}/status`,
+    url: '/api/user/status',
     method: 'put',
-    data
+    data: {
+      userId,
+      status
+    }
   })
 }
 
@@ -82,8 +85,12 @@ export const updatePassword = (data) => {
 // 重置用户密码
 export const resetPassword = (id) => {
   return request({
-    url: `/api/user/${id}/reset-password`,
-    method: 'put'
+    url: '/api/user/reset-password',
+    method: 'put',
+    data: {
+      id,
+      newPassword: '123456'
+    }
   })
 }
 

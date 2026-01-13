@@ -12,7 +12,7 @@
         </el-form-item>
         <el-form-item label="消息类型">
           <el-select 
-            v-model="searchForm.type" 
+            v-model="searchForm.messageType" 
             placeholder="请选择类型"
             clearable
             @change="handleSearch"
@@ -31,8 +31,8 @@
             @change="handleSearch"
             style="width: 150px"
           >
-            <el-option label="未读" :value="false" />
-            <el-option label="已读" :value="true" />
+            <el-option label="未读" :value="0" />
+            <el-option label="已读" :value="1" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -76,22 +76,22 @@
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column label="类型" width="100">
           <template #default="scope">
-            <el-tag :type="getTypeTagType(scope.row.type)">
-              {{ getTypeName(scope.row.type) }}
+            <el-tag :type="getTypeTagType(scope.row.messageType)">
+              {{ getTypeName(scope.row.messageType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="receiver_username" label="接收者" width="120" />
+        <el-table-column prop="receiverName" label="接收者" width="120" />
         <el-table-column prop="title" label="标题" show-overflow-tooltip />
         <el-table-column prop="content" label="内容" show-overflow-tooltip />
         <el-table-column label="状态" width="80">
           <template #default="scope">
-            <el-tag :type="scope.row.is_read ? 'info' : 'success'">
-              {{ scope.row.is_read ? '已读' : '未读' }}
+            <el-tag :type="scope.row.isRead === 1 ? 'info' : 'success'">
+              {{ scope.row.isRead === 1 ? '已读' : '未读' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="发送时间" width="180" />
+        <el-table-column prop="createTime" label="发送时间" width="180" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="scope">
             <el-button 
@@ -147,12 +147,15 @@
           {{ currentMessage.id }}
         </el-descriptions-item>
         <el-descriptions-item label="消息类型">
-          <el-tag :type="getTypeTagType(currentMessage.type)">
-            {{ getTypeName(currentMessage.type) }}
+          <el-tag :type="getTypeTagType(currentMessage.messageType)">
+            {{ getTypeName(currentMessage.messageType) }}
           </el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="发送者" v-if="currentMessage.senderName">
+          {{ currentMessage.senderName }}
+        </el-descriptions-item>
         <el-descriptions-item label="接收者">
-          {{ currentMessage.receiver_username }}
+          {{ currentMessage.receiverName }}
         </el-descriptions-item>
         <el-descriptions-item label="标题">
           {{ currentMessage.title }}
@@ -160,16 +163,27 @@
         <el-descriptions-item label="内容">
           <div class="message-content">{{ currentMessage.content }}</div>
         </el-descriptions-item>
+        <el-descriptions-item label="优先级" v-if="currentMessage.priority !== undefined">
+          <el-tag :type="currentMessage.priority === 0 ? 'info' : 'warning'">
+            {{ currentMessage.priority === 0 ? '普通' : '重要' }}
+          </el-tag>
+        </el-descriptions-item>
         <el-descriptions-item label="状态">
-          <el-tag :type="currentMessage.is_read ? 'info' : 'success'">
-            {{ currentMessage.is_read ? '已读' : '未读' }}
+          <el-tag :type="currentMessage.isRead === 1 ? 'info' : 'success'">
+            {{ currentMessage.isRead === 1 ? '已读' : '未读' }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="发送时间">
-          {{ currentMessage.created_at }}
+          {{ currentMessage.createTime }}
         </el-descriptions-item>
-        <el-descriptions-item label="阅读时间" v-if="currentMessage.read_at">
-          {{ currentMessage.read_at }}
+        <el-descriptions-item label="阅读时间" v-if="currentMessage.readTime">
+          {{ currentMessage.readTime }}
+        </el-descriptions-item>
+        <el-descriptions-item label="关联类型" v-if="currentMessage.relatedType">
+          {{ currentMessage.relatedType }}
+        </el-descriptions-item>
+        <el-descriptions-item label="关联ID" v-if="currentMessage.relatedId">
+          {{ currentMessage.relatedId }}
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -247,14 +261,15 @@ import {
   sendBatchMessages,
   deleteMessage,
   batchDeleteMessages,
-  getUnreadCount
+  getUnreadCount,
+  markAsRead
 } from '@/api/message'
 import { getUserList } from '@/api/user'
 
 // 搜索表单
 const searchForm = reactive({
   receiverUsername: '',
-  type: '',
+  messageType: '',
   isRead: null
 })
 
@@ -337,8 +352,8 @@ const getTypeTagType = (type) => {
 // 加载用户列表
 const loadUsers = async () => {
   try {
-    const res = await getUserList({ page: 1, page_size: 1000 })
-    users.value = res.data.users
+    const res = await getUserList({ page: 1, pageSize: 1000 })
+    users.value = res.data.users || res.data.list || res.data
   } catch (error) {
     ElMessage.error(error.message || '获取用户列表失败')
   }
@@ -360,15 +375,15 @@ const loadData = async () => {
   try {
     const params = {
       page: currentPage.value,
-      page_size: pageSize.value,
-      receiver_username: searchForm.receiverUsername || undefined,
-      type: searchForm.type || undefined,
-      is_read: searchForm.isRead !== null ? searchForm.isRead : undefined
+      pageSize: pageSize.value,
+      receiverUsername: searchForm.receiverUsername || undefined,
+      messageType: searchForm.messageType || undefined,
+      isRead: searchForm.isRead !== null && searchForm.isRead !== '' ? searchForm.isRead : undefined
     }
 
     const res = await getMessageList(params)
-    tableData.value = res.data.messages
-    total.value = res.data.total
+    tableData.value = res.data || []
+    total.value = res.data.length || 0
     
     // 同时刷新未读数量
     loadUnreadCount()
@@ -388,7 +403,7 @@ const handleSearch = () => {
 // 重置
 const handleReset = () => {
   searchForm.receiverUsername = ''
-  searchForm.type = ''
+  searchForm.messageType = ''
   searchForm.isRead = null
   currentPage.value = 1
   loadData()
@@ -412,9 +427,24 @@ const handleSelectionChange = (selection) => {
 }
 
 // 查看详情
-const handleViewDetail = (row) => {
+const handleViewDetail = async (row) => {
   currentMessage.value = row
   detailDialogVisible.value = true
+  
+  // 如果消息是未读状态，自动标记为已读
+  if (row.isRead === 0) {
+    try {
+      await markAsRead(row.id)
+      // 更新本地数据状态
+      row.isRead = 1
+      // 刷新未读数量
+      loadUnreadCount()
+      ElMessage.success('消息已标记为已读')
+    } catch (error) {
+      console.error('标记已读失败:', error)
+      // 标记失败不影响查看详情
+    }
+  }
 }
 
 // 发送系统消息
@@ -446,7 +476,7 @@ const confirmSend = async () => {
     } else {
       await sendBatchMessages({
         ...data,
-        receiver_ids: sendForm.receiverIds
+        receiverIds: sendForm.receiverIds
       })
       ElMessage.success(`消息已发送给 ${sendForm.receiverIds.length} 位用户`)
     }
@@ -498,7 +528,7 @@ const handleBatchDelete = async () => {
       }
     )
 
-    await batchDeleteMessages({ message_ids: selectedIds.value })
+    await batchDeleteMessages(selectedIds.value)
     ElMessage.success('批量删除成功')
     selectedIds.value = []
     loadData()

@@ -42,20 +42,23 @@ export const getTimeslotsByStatus = (status) => {
 }
 
 // 更新时间段信息
-export const updateTimeslot = (data) => {
+export const updateTimeslot = (id, data) => {
   return request({
-    url: '/api/timeslot',
+    url: `/api/timeslot/${id}`,
     method: 'put',
     data
   })
 }
 
 // 更新时间段状态
-export const updateTimeslotStatus = (params) => {
+export const updateTimeslotStatus = (id, status) => {
   return request({
     url: '/api/timeslot/status',
     method: 'put',
-    params
+    params: {
+      id,
+      status
+    }
   })
 }
 

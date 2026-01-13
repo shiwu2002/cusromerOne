@@ -80,17 +80,20 @@ export const updateLaboratory = (data) => {
 // 删除实验室
 export const deleteLaboratory = (id) => {
   return request({
-    url: `/laboratories/${id}`,
+    url: `/api/laboratory/${id}`,
     method: 'delete'
   })
 }
 
 // 更新实验室状态
-export const updateLaboratoryStatus = (id, data) => {
+export const updateLaboratoryStatus = (id, status) => {
   return request({
-    url: `/laboratories/${id}/status`,
+    url: '/api/laboratory/status',
     method: 'put',
-    data
+    params: {
+      id,
+      status
+    }
   })
 }
 
