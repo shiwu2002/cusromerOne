@@ -121,7 +121,7 @@ import { ElMessage } from 'element-plus'
 import { User, OfficeBuilding, Calendar, Warning } from '@element-plus/icons-vue'
 import { getReservationStatistics, getReservationList } from '@/api/reservation'
 import { getLaboratoryList, getLaboratoryStatistics } from '@/api/laboratory'
-import { getUserStatistics } from '@/api/user'
+import { getUserList } from '@/api/user'
 
 const router = useRouter()
 
@@ -187,10 +187,19 @@ const loadStatistics = async () => {
   try {
     console.log('=== 开始加载统计数据 ===')
     
-    // 加载用户统计
-    const userStats = await getUserStatistics()
-    console.log('用户统计数据:', userStats)
-    statistics.value.totalUsers = userStats.data?.totalCount || 0
+    // 加载用户统计 - 通过获取用户列表来统计总数
+    try {
+      const userList = await getUserList()
+      console.log('用户列表数据:', userList)
+      if (Array.isArray(userList.data)) {
+        statistics.value.totalUsers = userList.data.length
+      } else {
+        statistics.value.totalUsers = 0
+      }
+    } catch (error) {
+      console.error('获取用户列表失败:', error)
+      statistics.value.totalUsers = 0
+    }
     
     // 加载预约统计
     const reservationStats = await getReservationStatistics()
