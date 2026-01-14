@@ -96,6 +96,20 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 个人信息对话框 -->
+    <UserProfileDialog
+      v-if="userStore.userId"
+      v-model:visible="profileDialogVisible"
+      :userId="userStore.userId"
+    />
+
+    <!-- 修改密码对话框 -->
+    <ChangePasswordDialog
+      v-if="userStore.userId"
+      v-model:visible="passwordDialogVisible"
+      :userId="userStore.userId"
+    />
   </el-container>
 </template>
 
@@ -118,6 +132,8 @@ import {
 import { useUserStore, useAppStore } from '@/store'
 import { getPendingReservations } from '@/api/reservation'
 import { getUnreadCount } from '@/api/message'
+import UserProfileDialog from '@/components/UserProfileDialog.vue'
+import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -125,6 +141,8 @@ const userStore = useUserStore()
 const appStore = useAppStore()
 
 const pendingCount = ref(0)
+const profileDialogVisible = ref(false)
+const passwordDialogVisible = ref(false)
 
 const sidebarWidth = computed(() => {
   return appStore.sidebarCollapsed ? '64px' : '200px'
@@ -158,10 +176,10 @@ const fetchUnreadMessageCount = async () => {
 const handleCommand = (command) => {
   switch (command) {
     case 'profile':
-      ElMessage.info('个人信息功能开发中')
+      profileDialogVisible.value = true
       break
     case 'password':
-      ElMessage.info('修改密码功能开发中')
+      passwordDialogVisible.value = true
       break
     case 'logout':
       handleLogout()

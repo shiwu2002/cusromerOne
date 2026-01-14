@@ -9,6 +9,12 @@ const routes = [
     meta: { title: '登录', noAuth: true }
   },
   {
+    path: '/email-verify',
+    name: 'EmailVerify',
+    component: () => import('@/views/EmailVerify.vue'),
+    meta: { title: '邮箱验证', noAuth: true }
+  },
+  {
     path: '/',
     component: () => import('@/layouts/MainLayout.vue'),
     redirect: '/dashboard',

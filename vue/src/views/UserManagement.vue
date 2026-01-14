@@ -48,6 +48,13 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
+        <el-table-column prop="emailVerified" label="邮箱验证" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.emailVerified ? 'success' : 'danger'" size="small">
+              {{ row.emailVerified ? '已验证' : '未验证' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="realName" label="姓名" width="100" />
         <el-table-column prop="userType" label="角色" width="100">
           <template #default="{ row }">
@@ -67,11 +74,19 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" fixed="right" width="280">
+        <el-table-column label="操作" fixed="right" width="380">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
             <el-button type="warning" size="small" @click="handleResetPassword(row)">
               重置密码
+            </el-button>
+            <el-button 
+              v-if="row.email && !row.emailVerified"
+              type="success" 
+              size="small" 
+              @click="handleSendVerifyEmail(row)"
+            >
+              发送验证邮件
             </el-button>
             <el-button
               :type="row.status === 1 ? 'danger' : 'success'"
@@ -150,7 +165,8 @@ import {
   searchUsers,
   updateUser,
   updateUserStatus,
-  resetPassword
+  resetPassword,
+  resendVerifyEmail
 } from '@/api/user'
 
 const loading = ref(false)
@@ -336,6 +352,25 @@ const handleResetPassword = (row) => {
       ElMessage.success('密码已重置为默认密码')
     } catch (error) {
       ElMessage.error('重置密码失败')
+    }
+  }).catch(() => {})
+}
+
+const handleSendVerifyEmail = (row) => {
+  ElMessageBox.confirm(
+    `确定要重新发送验证邮件到 ${row.email} 吗？`,
+    '确认操作',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  ).then(async () => {
+    try {
+      await resendVerifyEmail({ userId: row.id })
+      ElMessage.success('验证邮件已发送，请提醒用户查收')
+    } catch (error) {
+      ElMessage.error(error.message || '发送验证邮件失败')
     }
   }).catch(() => {})
 }

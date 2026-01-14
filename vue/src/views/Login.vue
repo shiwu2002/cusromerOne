@@ -48,6 +48,14 @@
                 登录
               </el-button>
             </el-form-item>
+            
+            <el-form-item>
+              <div class="login-actions">
+                <el-link type="primary" @click="showForgotPasswordDialog = true">
+                  忘记密码？
+                </el-link>
+              </div>
+            </el-form-item>
           </el-form>
         </el-tab-pane>
         
@@ -146,14 +154,84 @@
       </el-tabs>
     </div>
   </div>
+  
+  <!-- 忘记密码对话框 -->
+  <el-dialog
+    v-model="showForgotPasswordDialog"
+    title="忘记密码"
+    width="400px"
+    @close="handleForgotPasswordClose"
+  >
+    <el-form
+      ref="forgotPasswordFormRef"
+      :model="forgotPasswordForm"
+      :rules="forgotPasswordRules"
+      label-width="80px"
+    >
+      <el-form-item label="邮箱" prop="email">
+        <el-input
+          v-model="forgotPasswordForm.email"
+          placeholder="请输入注册时使用的邮箱"
+          size="large"
+        />
+      </el-form-item>
+      
+      <el-form-item label="验证码" prop="code">
+        <div class="code-input-container">
+          <el-input
+            v-model="forgotPasswordForm.code"
+            placeholder="请输入验证码"
+            size="large"
+            style="flex: 1"
+          />
+          <el-button
+            type="primary"
+            size="large"
+            :disabled="codeCountdown > 0"
+            @click="handleSendCode"
+            style="margin-left: 10px"
+          >
+            {{ codeCountdown > 0 ? `${codeCountdown}秒后重试` : '发送验证码' }}
+          </el-button>
+        </div>
+      </el-form-item>
+      
+      <el-form-item label="新密码" prop="newPassword">
+        <el-input
+          v-model="forgotPasswordForm.newPassword"
+          type="password"
+          placeholder="请输入新密码"
+          size="large"
+          show-password
+        />
+      </el-form-item>
+      
+      <el-form-item label="确认密码" prop="confirmPassword">
+        <el-input
+          v-model="forgotPasswordForm.confirmPassword"
+          type="password"
+          placeholder="请再次输入新密码"
+          size="large"
+          show-password
+        />
+      </el-form-item>
+    </el-form>
+    
+    <template #footer>
+      <el-button @click="showForgotPasswordDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleResetPassword" :loading="resetLoading">
+        重置密码
+      </el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store'
-import { login, register } from '@/api/user'
+import { login, register, sendCode, verifyCode, resetPasswordByEmail } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -164,6 +242,13 @@ const activeTab = ref('login')
 // 登录表单
 const loginFormRef = ref(null)
 const loading = ref(false)
+
+// 忘记密码相关
+const showForgotPasswordDialog = ref(false)
+const forgotPasswordFormRef = ref(null)
+const resetLoading = ref(false)
+const codeCountdown = ref(0)
+let countdownTimer = null
 
 const loginForm = reactive({
   username: '',
@@ -192,6 +277,14 @@ const registerForm = reactive({
   userType: null,
   phone: '',
   email: ''
+})
+
+// 忘记密码表单
+const forgotPasswordForm = reactive({
+  email: '',
+  code: '',
+  newPassword: '',
+  confirmPassword: ''
 })
 
 // 自定义验证规则：确认密码
@@ -231,6 +324,35 @@ const validateEmail = (rule, value, callback) => {
       callback(new Error('请输入有效的邮箱地址'))
     }
   }
+}
+
+// 忘记密码表单验证规则
+const validateForgotPasswordConfirmPassword = (rule, value, callback) => {
+  if (value === '') {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== forgotPasswordForm.newPassword) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const forgotPasswordRules = {
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { min: 6, max: 6, message: '验证码为6位数字', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, validator: validateForgotPasswordConfirmPassword, trigger: 'blur' }
+  ]
 }
 
 const registerRules = {
@@ -323,6 +445,77 @@ const handleLogin = async () => {
   })
 }
 
+// 发送验证码
+const handleSendCode = async () => {
+  if (!forgotPasswordForm.email) {
+    ElMessage.warning('请输入邮箱地址')
+    return
+  }
+  
+  try {
+    await sendCode({
+      email: forgotPasswordForm.email,
+      purpose: 'reset-password'
+    })
+    ElMessage.success('验证码已发送，请查收邮件')
+    
+    // 开始倒计时
+    codeCountdown.value = 60
+    countdownTimer = setInterval(() => {
+      codeCountdown.value--
+      if (codeCountdown.value <= 0) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+      }
+    }, 1000)
+  } catch (error) {
+    ElMessage.error(error.message || '发送验证码失败')
+  }
+}
+
+// 重置密码
+const handleResetPassword = async () => {
+  if (!forgotPasswordFormRef.value) return
+  
+  await forgotPasswordFormRef.value.validate(async (valid) => {
+    if (valid) {
+      resetLoading.value = true
+      try {
+        await resetPasswordByEmail({
+          email: forgotPasswordForm.email,
+          code: forgotPasswordForm.code,
+          newPassword: forgotPasswordForm.newPassword
+        })
+        
+        ElMessage.success('密码重置成功，请使用新密码登录')
+        showForgotPasswordDialog.value = false
+      } catch (error) {
+        ElMessage.error(error.message || '密码重置失败')
+      } finally {
+        resetLoading.value = false
+      }
+    }
+  })
+}
+
+// 关闭忘记密码对话框
+const handleForgotPasswordClose = () => {
+  if (forgotPasswordFormRef.value) {
+    forgotPasswordFormRef.value.resetFields()
+  }
+  Object.assign(forgotPasswordForm, {
+    email: '',
+    code: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+  codeCountdown.value = 0
+}
+
 // 注册处理
 const handleRegister = async () => {
   if (!registerFormRef.value) return
@@ -358,6 +551,13 @@ const handleRegister = async () => {
     }
   })
 }
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+  }
+})
 </script>
 
 <style scoped>
@@ -438,6 +638,17 @@ const handleRegister = async () => {
 .login-box::-webkit-scrollbar-track {
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
+}
+
+.login-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -10px;
+}
+
+.code-input-container {
+  display: flex;
+  align-items: center;
 }
 
 /* 响应式设计 */
