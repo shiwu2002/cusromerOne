@@ -7,7 +7,7 @@ const request = require('../utils/request.js');
  * @returns {Promise}
  */
 function login(loginData) {
-  return request.post('/user/login', loginData).then(res => {
+  return request.post('/user/login', loginData, { skipAuth: true, noRedirectOn401: true }).then(res => {
     // 实际数据在data字段中
     const data = res.data || res;
     
@@ -31,7 +31,7 @@ function login(loginData) {
  * @returns {Promise}
  */
 function register(userData) {
-  return request.post('/user/register', userData);
+  return request.post('/user/register', userData, { skipAuth: true, noRedirectOn401: true });
 }
 
 /**

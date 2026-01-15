@@ -1,5 +1,6 @@
 // app.js
 const api = require('./api/index')
+const request = require('./utils/request')
 
 App({
   // 全局数据
@@ -89,7 +90,7 @@ App({
   // 检查登录状态
   checkLoginStatus() {
     try {
-      const token = wx.getStorageSync('token')
+      const token = request.getToken()
       const userInfo = wx.getStorageSync('userInfo')
       
       if (token && userInfo) {
@@ -150,7 +151,7 @@ App({
   setToken(token) {
     this.globalData.token = token
     try {
-      wx.setStorageSync('token', token)
+      request.setToken(token)
     } catch (error) {
       console.error('保存token失败:', error)
     }
@@ -163,7 +164,7 @@ App({
     this.globalData.unreadCount = 0
     
     try {
-      wx.removeStorageSync('token')
+      request.removeToken()
       wx.removeStorageSync('userInfo')
       wx.removeTabBarBadge({ index: 2 })
     } catch (error) {
@@ -173,7 +174,7 @@ App({
 
   // 检查是否登录
   checkAuth() {
-    const token = this.globalData.token || wx.getStorageSync('token')
+    const token = this.globalData.token || request.getToken()
     if (!token) {
       wx.showModal({
         title: '提示',

@@ -1,5 +1,6 @@
 // pages/index/index.js
 import api from '../../api/index'
+const request = require('../../utils/request')
 
 Page({
   data: {
@@ -34,7 +35,7 @@ Page({
    * 检查登录状态
    */
   checkLoginStatus() {
-    const token = wx.getStorageSync('token')
+    const token = request.getToken()
     const userInfo = wx.getStorageSync('userInfo')
     
     if (!token || !userInfo) {

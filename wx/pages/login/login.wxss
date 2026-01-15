@@ -1,30 +1,58 @@
-/* pages/login/login.wxss */
+/* 登录页面样式（整合微信登录、账号登录/注册与自动绑定） */
 .container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 40rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  box-sizing: border-box;
 }
 
-.logo-section {
+.header {
   text-align: center;
-  margin-bottom: 80rpx;
+  margin: 60rpx 0 40rpx;
 }
 
-.logo-text {
-  font-size: 120rpx;
+.header .icon {
+  font-size: 80rpx;
   display: block;
-  margin-bottom: 30rpx;
+  margin-bottom: 20rpx;
 }
 
-.title {
+.header .title {
   display: block;
   font-size: 48rpx;
   font-weight: bold;
   color: #ffffff;
-  text-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1);
+  margin-bottom: 15rpx;
+}
+
+.header .desc {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10rpx;
+  padding: 8rpx;
+  margin-bottom: 30rpx;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8rpx;
+  transition: all 0.3s;
+}
+
+.tab.active {
+  background: #ffffff;
+  color: #667eea;
+  font-weight: bold;
 }
 
 .form-section {
@@ -58,10 +86,11 @@
   height: 88rpx;
   background: #f5f7fa;
   border-radius: 10rpx;
-  padding: 0 30rpx;
+  padding: 0 90rpx 0 30rpx;
   font-size: 28rpx;
   border: 2rpx solid transparent;
   transition: all 0.3s;
+  box-sizing: border-box;
 }
 
 .input-field:focus {
@@ -72,35 +101,13 @@
 .toggle-password {
   position: absolute;
   right: 30rpx;
-  bottom: 30rpx;
-  font-size: 36rpx;
-  cursor: pointer;
+  bottom: 28rpx;
+  width: 40rpx;
+  height: 40rpx;
+  z-index: 10;
 }
 
-.remember-forgot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 30rpx 0 40rpx;
-  font-size: 26rpx;
-}
-
-.remember {
-  display: flex;
-  align-items: center;
-  color: #666;
-}
-
-.remember checkbox {
-  margin-right: 10rpx;
-}
-
-.forgot-link {
-  color: #1989fa;
-  font-weight: 500;
-}
-
-.login-btn {
+.submit-btn {
   width: 100%;
   height: 88rpx;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -111,72 +118,71 @@
   border: none;
   box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.4);
   transition: all 0.3s;
+  margin-top: 20rpx;
 }
 
-.login-btn[disabled] {
+.submit-btn[disabled] {
   opacity: 0.6;
 }
 
-.login-btn::after {
+.submit-btn::after {
   border: none;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 40rpx 0;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1rpx;
-  background: #e0e0e0;
-}
-
-.divider-text {
-  padding: 0 20rpx;
-  font-size: 26rpx;
-  color: #999;
-}
-
-.wechat-login-btn {
-  width: 100%;
-  height: 88rpx;
-  background: #07c160;
-  color: #ffffff;
-  border-radius: 10rpx;
-  font-size: 32rpx;
-  font-weight: bold;
-  border: none;
-  box-shadow: 0 8rpx 20rpx rgba(7, 193, 96, 0.3);
-  transition: all 0.3s;
+.tip {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 40rpx;
+  padding: 30rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10rpx;
 }
 
-.wechat-login-btn[disabled] {
-  opacity: 0.6;
-}
-
-.wechat-login-btn::after {
-  border: none;
-}
-
-.wechat-icon {
-  font-size: 40rpx;
+.tip-icon {
+  font-size: 32rpx;
   margin-right: 10rpx;
 }
 
-.register-section {
-  text-align: center;
-  margin-top: 40rpx;
-  font-size: 28rpx;
-  color: #666;
+.tip-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.95);
 }
 
-.register-link {
-  color: #1989fa;
-  font-weight: 500;
-  margin-left: 10rpx;
+/* 优化：操作区与链接样式 */
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 10rpx;
+}
+.link-btn {
+  font-size: 26rpx;
+  color: #ffffff;
+  opacity: 0.9;
+  padding: 10rpx 0;
+  text-decoration: underline;
+}
+
+/* 优化：注册副提示 */
+.tip-sub {
+  margin-top: 20rpx;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 24rpx;
+}
+
+/* 底部安全区，避免被指示条遮挡 */
+.safe-area-bottom {
+  height: env(safe-area-inset-bottom);
+}
+
+/* 输入长度控制的视觉提升（当有 maxlength 时更紧凑） */
+.input-field[maxlength="20"] {
+  letter-spacing: 0.5rpx;
+}
+
+/* 表单间距微调 */
+.form-section {
+  margin-top: 20rpx;
 }

@@ -1,5 +1,5 @@
 // api/wechat.js - 微信登录相关API
-const { request } = require('../utils/request')
+const req = require('../utils/request')
 
 /**
  * 微信登录相关API
@@ -11,12 +11,26 @@ const wechatApi = {
    * @returns {Promise}
    */
   login(code) {
-    return request({
+    return req.request({
       url: '/wx/login',
       method: 'POST',
       data: { code },
-      skipAuth: true // 此接口无需携带token
-    })
+      skipAuth: true, // 此接口无需携带token
+      noRedirectOn401: true
+    }).then(res => {
+      // 后端返回的数据结构为data，包含needBind、token、用户信息及openid/unionid
+      // 若已绑定则直接保存token与用户信息
+      if (res && res.needBind === false && res.token) {
+        req.setToken(res.token);
+        wx.setStorageSync('userInfo', {
+          userId: res.userId,
+          username: res.username,
+          userType: res.userType,
+          realName: res.realName
+        });
+      }
+      return res;
+    });
   },
 
   /**
@@ -25,19 +39,17 @@ const wechatApi = {
    * @param {number} data.userId - 用户ID
    * @param {string} data.openid - 微信openid
    * @param {string} data.unionid - 微信unionid（可选）
-   * @param {string} data.sessionKey - 微信session_key
    * @param {string} data.platform - 平台类型，默认mini_program
    * @returns {Promise}
    */
   bind(data) {
-    return request({
+    return req.request({
       url: '/wx/bind',
       method: 'POST',
       data: {
         userId: data.userId,
         openid: data.openid,
         unionid: data.unionid || null,
-        sessionKey: data.sessionKey,
         platform: data.platform || 'mini_program'
       },
       skipAuth: true // 绑定时可能还未登录
@@ -49,7 +61,7 @@ const wechatApi = {
    * @returns {Promise}
    */
   unbind() {
-    return request({
+    return req.request({
       url: '/wx/unbind',
       method: 'POST'
     })
@@ -60,7 +72,7 @@ const wechatApi = {
    * @returns {Promise}
    */
   getBindStatus() {
-    return request({
+    return req.request({
       url: '/wx/bind-status',
       method: 'GET'
     })

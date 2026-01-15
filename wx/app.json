@@ -4,7 +4,6 @@
     "pages/login/login",
     "pages/register/register",
     "pages/forgot-password/forgot-password",
-    "pages/bind-account/bind-account",
     "pages/laboratory-list/laboratory-list",
     "pages/laboratory-detail/laboratory-detail",
     "pages/reservation/reservation",

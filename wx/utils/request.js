@@ -23,8 +23,8 @@ function request(options) {
       ...options.header
     };
     
-    // 如果有token，添加到请求头
-    if (token) {
+    // 如果未显式跳过认证且有token，添加到请求头
+    if (!options.skipAuth && token) {
       header['Authorization'] = `Bearer ${token}`;
     }
     
@@ -38,8 +38,12 @@ function request(options) {
         // 统一处理响应
         if (res.statusCode === 200) {
           const data = res.data;
-          if (data.success) {
-            resolve(data.data);
+          // 兼容两种响应格式：
+          // 1) { success: true, data: {...} }
+          // 2) { code: 200, message: 'xxx', data: {...} }
+          const ok = data && (data.success === true || data.code === 200);
+          if (ok) {
+            resolve(data.data !== undefined ? data.data : data);
           } else {
             // 业务失败
             wx.showToast({
@@ -50,15 +54,26 @@ function request(options) {
             reject(data);
           }
         } else if (res.statusCode === 401) {
-          // token过期或未登录
+          // 401处理：支持在登录流程中禁止跳转，避免登录页自我重定向形成死循环
+          // 无论如何先清除token
+          wx.removeStorageSync(TOKEN_KEY);
+
+          const noRedirect = options.noRedirectOn401 || options.skipAuth;
+          const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [];
+          const currentRoute = pages && pages.length ? pages[pages.length - 1].route : '';
+
+          // 在以下场景，不进行重定向：显式禁止重定向、当前已在登录页
+          if (noRedirect || currentRoute === 'pages/login/login') {
+            reject(res);
+            return;
+          }
+
+          // 其余场景按原逻辑提示并跳登录页
           wx.showToast({
             title: '请先登录',
             icon: 'none',
             duration: 2000
           });
-          // 清除token
-          wx.removeStorageSync(TOKEN_KEY);
-          // 跳转到登录页
           setTimeout(() => {
             wx.redirectTo({
               url: '/pages/login/login'
@@ -90,44 +105,48 @@ function request(options) {
 /**
  * GET请求
  */
-function get(url, data = {}) {
+function get(url, data = {}, extra = {}) {
   return request({
     url: url,
     method: 'GET',
-    data: data
+    data: data,
+    ...extra
   });
 }
 
 /**
  * POST请求
  */
-function post(url, data = {}) {
+function post(url, data = {}, extra = {}) {
   return request({
     url: url,
     method: 'POST',
-    data: data
+    data: data,
+    ...extra
   });
 }
 
 /**
  * PUT请求
  */
-function put(url, data = {}) {
+function put(url, data = {}, extra = {}) {
   return request({
     url: url,
     method: 'PUT',
-    data: data
+    data: data,
+    ...extra
   });
 }
 
 /**
  * DELETE请求
  */
-function del(url, data = {}) {
+function del(url, data = {}, extra = {}) {
   return request({
     url: url,
     method: 'DELETE',
-    data: data
+    data: data,
+    ...extra
   });
 }
 
