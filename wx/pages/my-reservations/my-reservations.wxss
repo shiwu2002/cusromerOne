@@ -1,0 +1,227 @@
+/* pages/my-reservations/my-reservations.wxss */
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 20rpx;
+}
+
+/* 顶部Tab切换 */
+.tabs {
+  display: flex;
+  background-color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 30rpx 20rpx;
+  font-size: 28rpx;
+  color: #666;
+  position: relative;
+  min-width: 120rpx;
+}
+
+.tab-item.active {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 6rpx;
+  background-color: #4CAF50;
+  border-radius: 3rpx;
+}
+
+/* 预约列表 */
+.reservation-list {
+  height: calc(100vh - 100rpx);
+  padding: 20rpx;
+}
+
+.reservation-item {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+/* 状态标签 */
+.status-badge {
+  position: absolute;
+  top: 30rpx;
+  right: 30rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  color: #fff;
+}
+
+.status-PENDING {
+  background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+}
+
+.status-APPROVED {
+  background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+}
+
+.status-REJECTED {
+  background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+}
+
+.status-CANCELLED {
+  background: linear-gradient(135deg, #9E9E9E 0%, #757575 100%);
+}
+
+.status-COMPLETED {
+  background: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
+}
+
+/* 实验室信息 */
+.lab-info {
+  margin-bottom: 20rpx;
+  padding-right: 120rpx;
+}
+
+.lab-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.lab-location {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 预约信息 */
+.reservation-info {
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-row .label {
+  color: #666;
+  min-width: 140rpx;
+}
+
+.info-row .value {
+  color: #333;
+  flex: 1;
+}
+
+.info-row .value.reason {
+  color: #f44336;
+}
+
+/* 操作按钮 */
+.actions {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: 26rpx;
+  border-radius: 8rpx;
+  border: none;
+}
+
+.detail-btn {
+  background-color: #fff;
+  color: #4CAF50;
+  border: 2rpx solid #4CAF50;
+}
+
+.cancel-btn {
+  background-color: #fff;
+  color: #ff9800;
+  border: 2rpx solid #ff9800;
+}
+
+.complete-btn {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+/* 创建时间 */
+.create-time {
+  font-size: 24rpx;
+  color: #999;
+  text-align: right;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+
+.no-more {
+  text-align: center;
+  padding: 40rpx;
+  color: #ccc;
+  font-size: 26rpx;
+}
+
+/* 空状态 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+}
+
+.empty-icon {
+  width: 240rpx;
+  height: 240rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.goto-lab-btn {
+  background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+  color: #fff;
+  padding: 20rpx 60rpx;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+}

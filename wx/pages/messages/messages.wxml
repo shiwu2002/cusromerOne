@@ -1,0 +1,59 @@
+<!--pages/messages/messages.wxml-->
+<view class="messages-container">
+  <!-- 未读消息统计 -->
+  <view class="unread-banner" wx:if="{{unreadCount > 0}}">
+    <view class="unread-info">
+      <text class="unread-icon">📬</text>
+      <text class="unread-text">您有 {{unreadCount}} 条未读消息</text>
+    </view>
+    <button class="mark-all-btn" bindtap="markAllAsRead" size="mini">全部标记已读</button>
+  </view>
+
+  <!-- 消息列表 -->
+  <view class="message-list" wx:if="{{messageList.length > 0}}">
+    <view 
+      class="message-item {{item.isRead ? 'read' : 'unread'}}" 
+      wx:for="{{messageList}}" 
+      wx:key="id"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="message-header">
+        <view class="message-type-badge type-{{item.type}}">
+          <text class="type-icon">{{getTypeIcon(item.type)}}</text>
+          <text class="type-text">{{getTypeText(item.type)}}</text>
+        </view>
+        <view class="message-time">{{formatTime(item.createdAt)}}</view>
+      </view>
+
+      <view class="message-title">
+        <text class="unread-dot" wx:if="{{!item.isRead}}"></text>
+        <text class="title-text">{{item.title}}</text>
+      </view>
+
+      <view class="message-content">{{item.content}}</view>
+
+      <!-- 预约相关信息 -->
+      <view class="related-info" wx:if="{{item.reservationId}}">
+        <text class="info-icon">🔗</text>
+        <text class="info-text">预约编号：{{item.reservationNumber || item.reservationId}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{messageList.length === 0 && !loading}}">
+    <image class="empty-icon" src="/images/empty-message.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无消息</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-more" wx:if="{{loadingMore}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 没有更多 -->
+  <view class="no-more" wx:if="{{noMore && messageList.length > 0}}">
+    <text class="no-more-text">没有更多消息了</text>
+  </view>
+</view>

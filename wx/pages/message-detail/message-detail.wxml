@@ -1,0 +1,82 @@
+<!--pages/message-detail/message-detail.wxml-->
+<view class="message-detail-container">
+  <!-- 消息头部 -->
+  <view class="message-header">
+    <view class="type-badge type-{{messageDetail.type}}">
+      <text class="type-icon">{{getTypeIcon(messageDetail.type)}}</text>
+      <text class="type-text">{{getTypeText(messageDetail.type)}}</text>
+    </view>
+    <view class="time-info">{{formatTime(messageDetail.createdAt)}}</view>
+  </view>
+
+  <!-- 消息标题 -->
+  <view class="message-title">{{messageDetail.title}}</view>
+
+  <!-- 消息内容 -->
+  <view class="message-content">
+    <text class="content-text">{{messageDetail.content}}</text>
+  </view>
+
+  <!-- 预约相关信息 -->
+  <view class="reservation-card" wx:if="{{messageDetail.reservationId}}">
+    <view class="card-header">
+      <text class="card-icon">🔗</text>
+      <text class="card-title">相关预约</text>
+    </view>
+    <view class="reservation-info">
+      <view class="info-row">
+        <text class="label">预约编号：</text>
+        <text class="value">{{reservationDetail.reservationNumber || messageDetail.reservationId}}</text>
+      </view>
+      <view class="info-row" wx:if="{{reservationDetail.laboratory}}">
+        <text class="label">实验室：</text>
+        <text class="value">{{reservationDetail.laboratory.name}}</text>
+      </view>
+      <view class="info-row" wx:if="{{reservationDetail.date}}">
+        <text class="label">预约日期：</text>
+        <text class="value">{{reservationDetail.date}}</text>
+      </view>
+      <view class="info-row" wx:if="{{reservationDetail.timeSlot}}">
+        <text class="label">时间段：</text>
+        <text class="value">{{reservationDetail.timeSlot.startTime}} - {{reservationDetail.timeSlot.endTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{reservationDetail.status}}">
+        <text class="label">状态：</text>
+        <text class="value status-{{reservationDetail.status}}">{{getStatusText(reservationDetail.status)}}</text>
+      </view>
+    </view>
+    <view class="view-detail-btn" bindtap="goToReservation">
+      <text>查看详情</text>
+      <text class="arrow">→</text>
+    </view>
+  </view>
+
+  <!-- 拒绝原因 -->
+  <view class="reject-card" wx:if="{{messageDetail.type === 'RESERVATION_REJECTED' && reservationDetail.rejectReason}}">
+    <view class="card-header">
+      <text class="card-icon">❌</text>
+      <text class="card-title">拒绝原因</text>
+    </view>
+    <view class="reject-reason">
+      <text>{{reservationDetail.rejectReason}}</text>
+    </view>
+  </view>
+
+  <!-- 附加信息 */
+  <view class="additional-info" wx:if="{{messageDetail.additionalInfo}}">
+    <view class="info-title">附加信息</view>
+    <view class="info-content">
+      <text>{{messageDetail.additionalInfo}}</text>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="action-buttons" wx:if="{{showActions}}">
+    <button class="action-btn primary" bindtap="handlePrimaryAction">
+      {{primaryActionText}}
+    </button>
+    <button class="action-btn secondary" wx:if="{{secondaryActionText}}" bindtap="handleSecondaryAction">
+      {{secondaryActionText}}
+    </button>
+  </view>
+</view>

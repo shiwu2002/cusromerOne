@@ -1,0 +1,218 @@
+<!--pages/profile/profile.wxml-->
+<view class="profile-container">
+  <!-- 头部信息卡片 -->
+  <view class="header-card">
+    <view class="avatar-section" bindtap="changeAvatar">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <view class="camera-icon">
+        <text class="iconfont icon-camera"></text>
+      </view>
+    </view>
+    <view class="user-info">
+      <view class="username">{{userInfo.username || '未登录'}}</view>
+      <view class="email">{{userInfo.email || '请先登录'}}</view>
+      <view class="role-badge" wx:if="{{userInfo.role}}">
+        <text class="role-text">{{userInfo.role === 'ADMIN' ? '管理员' : '普通用户'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stats-section">
+    <view class="stat-item" bindtap="goToMyReservations">
+      <view class="stat-value">{{stats.totalReservations || 0}}</view>
+      <view class="stat-label">总预约</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="goToMyReservations">
+      <view class="stat-value">{{stats.completedReservations || 0}}</view>
+      <view class="stat-label">已完成</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item" bindtap="goToMessages">
+      <view class="stat-value">{{stats.unreadMessages || 0}}</view>
+      <view class="stat-label">未读消息</view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="menu-group">
+      <view class="menu-item" bindtap="goToMyReservations">
+        <view class="menu-icon">
+          <text class="iconfont icon-calendar"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">我的预约</view>
+          <view class="menu-desc">查看预约记录</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="menu-item" bindtap="goToMessages">
+        <view class="menu-icon">
+          <text class="iconfont icon-message"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">消息中心</view>
+          <view class="menu-desc" wx:if="{{stats.unreadMessages > 0}}">{{stats.unreadMessages}}条未读</view>
+          <view class="menu-desc" wx:else>暂无未读消息</view>
+        </view>
+        <view class="menu-badge" wx:if="{{stats.unreadMessages > 0}}">
+          {{stats.unreadMessages > 99 ? '99+' : stats.unreadMessages}}
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+    </view>
+
+    <view class="menu-group">
+      <view class="menu-item" bindtap="editProfile">
+        <view class="menu-icon">
+          <text class="iconfont icon-edit"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">编辑资料</view>
+          <view class="menu-desc">修改个人信息</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="menu-item" bindtap="changePassword">
+        <view class="menu-icon">
+          <text class="iconfont icon-lock"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">修改密码</view>
+          <view class="menu-desc">定期更换密码更安全</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="menu-item" bindtap="goToSettings">
+        <view class="menu-icon">
+          <text class="iconfont icon-setting"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">设置</view>
+          <view class="menu-desc">应用设置和偏好</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 管理员专属功能 -->
+    <view class="menu-group" wx:if="{{userInfo.role === 'ADMIN'}}">
+      <view class="menu-group-title">管理员功能</view>
+      <view class="menu-item" bindtap="manageLaboratories">
+        <view class="menu-icon admin">
+          <text class="iconfont icon-laboratory"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">实验室管理</view>
+          <view class="menu-desc">添加、编辑实验室信息</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="menu-item" bindtap="manageReservations">
+        <view class="menu-icon admin">
+          <text class="iconfont icon-manage"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">预约管理</view>
+          <view class="menu-desc">审核、处理用户预约</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="menu-item" bindtap="manageUsers">
+        <view class="menu-icon admin">
+          <text class="iconfont icon-users"></text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">用户管理</view>
+          <view class="menu-desc">查看、管理用户信息</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 退出登录按钮 -->
+  <view class="logout-section">
+    <button class="logout-btn" bindtap="logout">退出登录</button>
+  </view>
+</view>
+
+<!-- 编辑资料弹窗 -->
+<view class="modal-mask" wx:if="{{showEditModal}}" bindtap="closeEditModal">
+  <view class="modal-container" catchtap="preventClose">
+    <view class="modal-header">
+      <view class="modal-title">编辑资料</view>
+      <view class="modal-close" bindtap="closeEditModal">
+        <text class="iconfont icon-close"></text>
+      </view>
+    </view>
+    <view class="modal-body">
+      <view class="form-item">
+        <view class="form-label">用户名</view>
+        <input class="form-input" value="{{editForm.username}}" bindinput="onUsernameInput" placeholder="请输入用户名" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">邮箱</view>
+        <view class="form-value">{{userInfo.email}}</view>
+        <view class="form-tip">邮箱不可修改</view>
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeEditModal">取消</button>
+      <button class="modal-btn confirm" bindtap="saveProfile">保存</button>
+    </view>
+  </view>
+</view>
+
+<!-- 修改密码弹窗 -->
+<view class="modal-mask" wx:if="{{showPasswordModal}}" bindtap="closePasswordModal">
+  <view class="modal-container" catchtap="preventClose">
+    <view class="modal-header">
+      <view class="modal-title">修改密码</view>
+      <view class="modal-close" bindtap="closePasswordModal">
+        <text class="iconfont icon-close"></text>
+      </view>
+    </view>
+    <view class="modal-body">
+      <view class="form-item">
+        <view class="form-label">当前密码</view>
+        <input class="form-input" type="password" value="{{passwordForm.oldPassword}}" bindinput="onOldPasswordInput" placeholder="请输入当前密码" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">新密码</view>
+        <input class="form-input" type="password" value="{{passwordForm.newPassword}}" bindinput="onNewPasswordInput" placeholder="请输入新密码（8-20位）" />
+      </view>
+      <view class="form-item">
+        <view class="form-label">确认密码</view>
+        <input class="form-input" type="password" value="{{passwordForm.confirmPassword}}" bindinput="onConfirmPasswordInput" placeholder="请再次输入新密码" />
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closePasswordModal">取消</button>
+      <button class="modal-btn confirm" bindtap="savePassword">确认修改</button>
+    </view>
+  </view>
+</view>

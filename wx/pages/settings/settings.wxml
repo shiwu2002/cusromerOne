@@ -1,0 +1,248 @@
+<!--pages/settings/settings.wxml-->
+<view class="settings-container">
+  <!-- 通用设置 -->
+  <view class="settings-group">
+    <view class="group-title">通用设置</view>
+    <view class="settings-list">
+      <view class="setting-item">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-bell"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">消息通知</view>
+            <view class="setting-desc">接收预约、审核等通知</view>
+          </view>
+        </view>
+        <switch checked="{{settings.notification}}" bindchange="onNotificationChange" color="#667eea" />
+      </view>
+
+      <view class="setting-item">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-sound"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">声音提醒</view>
+            <view class="setting-desc">新消息声音提醒</view>
+          </view>
+        </view>
+        <switch checked="{{settings.sound}}" bindchange="onSoundChange" color="#667eea" />
+      </view>
+
+      <view class="setting-item">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-vibrate"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">震动提醒</view>
+            <view class="setting-desc">新消息震动提醒</view>
+          </view>
+        </view>
+        <switch checked="{{settings.vibrate}}" bindchange="onVibrateChange" color="#667eea" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 隐私设置 -->
+  <view class="settings-group">
+    <view class="group-title">隐私设置</view>
+    <view class="settings-list">
+      <view class="setting-item">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-eye"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">显示预约历史</view>
+            <view class="setting-desc">他人可查看我的预约记录</view>
+          </view>
+        </view>
+        <switch checked="{{settings.showHistory}}" bindchange="onShowHistoryChange" color="#667eea" />
+      </view>
+
+      <view class="setting-item">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-phone"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">显示联系方式</view>
+            <view class="setting-desc">预约时显示我的联系方式</view>
+          </view>
+        </view>
+        <switch checked="{{settings.showContact}}" bindchange="onShowContactChange" color="#667eea" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 其他设置 -->
+  <view class="settings-group">
+    <view class="group-title">其他</view>
+    <view class="settings-list">
+      <view class="setting-item" bindtap="clearCache">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-delete"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">清除缓存</view>
+            <view class="setting-desc">{{cacheSize}}</view>
+          </view>
+        </view>
+        <view class="setting-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="setting-item" bindtap="checkUpdate">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-refresh"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">检查更新</view>
+            <view class="setting-desc">当前版本 {{version}}</view>
+          </view>
+        </view>
+        <view class="setting-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="setting-item" bindtap="showAbout">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-info"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">关于我们</view>
+            <view class="setting-desc">应用信息和服务条款</view>
+          </view>
+        </view>
+        <view class="setting-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
+      <view class="setting-item" bindtap="showFeedback">
+        <view class="setting-info">
+          <view class="setting-icon">
+            <text class="iconfont icon-message"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title">意见反馈</view>
+            <view class="setting-desc">提交问题或建议</view>
+          </view>
+        </view>
+        <view class="setting-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 账号管理 -->
+  <view class="settings-group">
+    <view class="group-title">账号管理</view>
+    <view class="settings-list danger">
+      <view class="setting-item" bindtap="confirmDeleteAccount">
+        <view class="setting-info">
+          <view class="setting-icon danger">
+            <text class="iconfont icon-warning"></text>
+          </view>
+          <view class="setting-content">
+            <view class="setting-title danger">注销账号</view>
+            <view class="setting-desc">删除所有数据，不可恢复</view>
+          </view>
+        </view>
+        <view class="setting-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 关于我们弹窗 -->
+<view class="modal-mask" wx:if="{{showAboutModal}}" bindtap="closeAboutModal">
+  <view class="modal-container about" catchtap="preventClose">
+    <view class="modal-close" bindtap="closeAboutModal">
+      <text class="iconfont icon-close"></text>
+    </view>
+    <view class="about-content">
+      <text class="about-logo">🔬</text>
+      <view class="about-name">实验室预约系统</view>
+      <view class="about-version">版本 {{version}}</view>
+      <view class="about-desc">
+        专业的实验室预约管理平台，为高校师生提供便捷的实验室预约服务。
+      </view>
+      <view class="about-links">
+        <view class="about-link" bindtap="openPrivacy">隐私政策</view>
+        <view class="about-divider">|</view>
+        <view class="about-link" bindtap="openTerms">服务条款</view>
+      </view>
+      <view class="about-copyright">© 2024 实验室预约系统</view>
+    </view>
+  </view>
+</view>
+
+<!-- 反馈弹窗 -->
+<view class="modal-mask" wx:if="{{showFeedbackModal}}" bindtap="closeFeedbackModal">
+  <view class="modal-container" catchtap="preventClose">
+    <view class="modal-header">
+      <view class="modal-title">意见反馈</view>
+      <view class="modal-close" bindtap="closeFeedbackModal">
+        <text class="iconfont icon-close"></text>
+      </view>
+    </view>
+    <view class="modal-body">
+      <view class="feedback-type">
+        <view class="type-label">反馈类型</view>
+        <view class="type-options">
+          <view 
+            class="type-option {{feedbackForm.type === 'bug' ? 'active' : ''}}" 
+            bindtap="selectFeedbackType" 
+            data-type="bug">
+            Bug反馈
+          </view>
+          <view 
+            class="type-option {{feedbackForm.type === 'feature' ? 'active' : ''}}" 
+            bindtap="selectFeedbackType" 
+            data-type="feature">
+            功能建议
+          </view>
+          <view 
+            class="type-option {{feedbackForm.type === 'other' ? 'active' : ''}}" 
+            bindtap="selectFeedbackType" 
+            data-type="other">
+            其他
+          </view>
+        </view>
+      </view>
+      <view class="feedback-content">
+        <textarea 
+          class="feedback-textarea" 
+          placeholder="请详细描述您的问题或建议..." 
+          value="{{feedbackForm.content}}"
+          bindinput="onFeedbackInput"
+          maxlength="500"
+          show-count
+        />
+      </view>
+      <view class="feedback-contact">
+        <input 
+          class="contact-input" 
+          placeholder="联系方式（选填）" 
+          value="{{feedbackForm.contact}}"
+          bindinput="onContactInput"
+        />
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeFeedbackModal">取消</button>
+      <button class="modal-btn confirm" bindtap="submitFeedback">提交</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,279 @@
+/* pages/message-detail/message-detail.wxss */
+.message-detail-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 30rpx;
+  padding-bottom: 120rpx;
+}
+
+/* 消息头部 */
+.message-header {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.type-badge {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.type-badge.type-RESERVATION_CREATED {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.type-badge.type-RESERVATION_APPROVED {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.type-badge.type-RESERVATION_REJECTED {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.type-badge.type-RESERVATION_CANCELLED {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.type-badge.type-RESERVATION_COMPLETED {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.type-badge.type-SYSTEM {
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.type-icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.type-text {
+  font-weight: 500;
+}
+
+.time-info {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 消息标题 */
+.message-title {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx 24rpx;
+  margin-bottom: 20rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.5;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+/* 消息内容 */
+.message-content {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.content-text {
+  color: #666;
+  font-size: 30rpx;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 预约卡片 */
+.reservation-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.card-icon {
+  font-size: 36rpx;
+  margin-right: 12rpx;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.reservation-info {
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  padding: 12rpx 0;
+  font-size: 28rpx;
+}
+
+.info-row .label {
+  color: #999;
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+.info-row .value {
+  color: #333;
+  flex: 1;
+  word-break: break-all;
+}
+
+.info-row .value.status-PENDING {
+  color: #ff9800;
+}
+
+.info-row .value.status-APPROVED {
+  color: #4caf50;
+}
+
+.info-row .value.status-REJECTED {
+  color: #f44336;
+}
+
+.info-row .value.status-CANCELLED {
+  color: #9e9e9e;
+}
+
+.info-row .value.status-COMPLETED {
+  color: #2196f3;
+}
+
+.view-detail-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  color: #07c160;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.view-detail-btn:active {
+  background-color: #efefef;
+}
+
+.view-detail-btn .arrow {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 拒绝原因卡片 */
+.reject-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  border-left: 6rpx solid #f44336;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.reject-reason {
+  color: #666;
+  font-size: 28rpx;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 附加信息 */
+.additional-info {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.info-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-content {
+  color: #666;
+  font-size: 28rpx;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 底部操作按钮 */
+.action-buttons {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx 30rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background-color: #fff;
+  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.action-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+}
+
+.action-btn.primary {
+  background-color: #07c160;
+  color: #fff;
+}
+
+.action-btn.primary:active {
+  background-color: #06ad56;
+}
+
+.action-btn.secondary {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.action-btn.secondary:active {
+  background-color: #efefef;
+}

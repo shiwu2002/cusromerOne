@@ -1,0 +1,105 @@
+<!--pages/laboratory-list/laboratory-list.wxml-->
+<view class="container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input">
+      <text class="search-icon">🔍</text>
+      <input type="text" placeholder="搜索实验室名称、编号或位置" value="{{keyword}}" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch" />
+      <text class="clear-icon" wx:if="{{keyword}}" bindtap="onClearSearch">✕</text>
+    </view>
+    <view class="filter-btn" bindtap="toggleFilter">
+      <text>筛选</text>
+      <text class="filter-icon">{{showFilter ? '▲' : '▼'}}</text>
+    </view>
+  </view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel" wx:if="{{showFilter}}">
+    <view class="filter-group">
+      <text class="filter-label">类型：</text>
+      <view class="filter-options">
+        <view class="filter-option {{selectedType === '' ? 'active' : ''}}" bindtap="selectType" data-type="">
+          全部
+        </view>
+        <view class="filter-option {{selectedType === item ? 'active' : ''}}" wx:for="{{labTypes}}" wx:key="index" bindtap="selectType" data-type="{{item}}">
+          {{item}}
+        </view>
+      </view>
+    </view>
+
+    <view class="filter-group">
+      <text class="filter-label">状态：</text>
+      <view class="filter-options">
+        <view class="filter-option {{selectedStatus === null ? 'active' : ''}}" bindtap="selectStatus" data-status="{{null}}">
+          全部
+        </view>
+        <view class="filter-option {{selectedStatus === 1 ? 'active' : ''}}" bindtap="selectStatus" data-status="{{1}}">
+          可用
+        </view>
+        <view class="filter-option {{selectedStatus === 0 ? 'active' : ''}}" bindtap="selectStatus" data-status="{{0}}">
+          维护中
+        </view>
+        <view class="filter-option {{selectedStatus === 2 ? 'active' : ''}}" bindtap="selectStatus" data-status="{{2}}">
+          停用
+        </view>
+      </view>
+    </view>
+
+    <view class="filter-actions">
+      <button class="btn-reset" bindtap="resetFilter">重置</button>
+      <button class="btn-confirm" bindtap="applyFilter">确定</button>
+    </view>
+  </view>
+
+  <!-- 实验室列表 -->
+  <view class="lab-list">
+    <view class="lab-card" wx:for="{{laboratories}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
+      <image src="{{item.imageUrl || '/images/default-lab.png'}}" mode="aspectFill" class="lab-image"></image>
+      <view class="lab-info">
+        <view class="lab-header">
+          <text class="lab-name">{{item.labName}}</text>
+          <view class="lab-status status-{{item.status}}">
+            <text class="status-dot"></text>
+            <text class="status-text">{{item.status === 1 ? '可用' : item.status === 0 ? '维护中' : '停用'}}</text>
+          </view>
+        </view>
+        
+        <text class="lab-code">编号：{{item.labCode}}</text>
+        <text class="lab-location">📍 {{item.location}}</text>
+        
+        <view class="lab-meta">
+          <text class="lab-capacity">👥 容量: {{item.capacity}}人</text>
+          <text class="lab-type">🔬 {{item.labType}}</text>
+        </view>
+        
+        <text class="lab-description">{{item.description}}</text>
+        
+        <view class="lab-footer">
+          <text class="lab-equipment">设备：{{item.equipment || '暂无'}}</text>
+          <text class="lab-arrow">→</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{laboratories.length === 0 && !loading}}">
+    <text class="empty-icon">🔬</text>
+    <text class="empty-text">{{keyword || selectedType || selectedStatus !== null ? '未找到符合条件的实验室' : '暂无实验室数据'}}</text>
+    <button class="btn-refresh" bindtap="loadLaboratories">刷新</button>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{laboratories.length > 0 && hasMore && !loading}}">
+    <text class="load-more-text" bindtap="loadMore">加载更多</text>
+  </view>
+
+  <view class="no-more" wx:if="{{laboratories.length > 0 && !hasMore}}">
+    <text class="no-more-text">没有更多了</text>
+  </view>
+</view>

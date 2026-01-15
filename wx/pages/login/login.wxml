@@ -1,0 +1,78 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <view class="logo-section">
+    <text class="logo-text">🔬</text>
+    <text class="title">实验室预约系统</text>
+  </view>
+
+  <view class="form-section">
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">📧</text>
+        <text>邮箱</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="text" 
+        placeholder="请输入邮箱"
+        value="{{email}}"
+        bindinput="onEmailInput"
+      />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔒</text>
+        <text>密码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="{{showPassword ? 'text' : 'password'}}" 
+        placeholder="请输入密码"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+      />
+      <text class="toggle-password" bindtap="togglePassword">
+        {{showPassword ? '👁️' : '👁️‍🗨️'}}
+      </text>
+    </view>
+
+    <view class="remember-forgot">
+      <label class="remember">
+        <checkbox checked="{{rememberMe}}" bindtap="toggleRemember"/>
+        <text>记住我</text>
+      </label>
+      <text class="forgot-link" bindtap="goToForgotPassword">忘记密码？</text>
+    </view>
+
+    <button 
+      class="login-btn" 
+      bindtap="handleLogin"
+      loading="{{loading}}"
+      disabled="{{loading}}"
+    >
+      {{loading ? '登录中...' : '登录'}}
+    </button>
+
+    <view class="divider">
+      <view class="divider-line"></view>
+      <text class="divider-text">或</text>
+      <view class="divider-line"></view>
+    </view>
+
+    <button 
+      class="wechat-login-btn" 
+      bindtap="handleWechatLogin"
+      loading="{{wechatLoading}}"
+      disabled="{{wechatLoading}}"
+    >
+      <text class="wechat-icon">💬</text>
+      {{wechatLoading ? '登录中...' : '微信一键登录'}}
+    </button>
+
+    <view class="register-section">
+      <text>还没有账号？</text>
+      <text class="register-link" bindtap="goToRegister">立即注册</text>
+    </view>
+  </view>
+</view>

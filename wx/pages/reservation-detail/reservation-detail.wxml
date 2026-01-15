@@ -1,0 +1,131 @@
+<!--pages/reservation-detail/reservation-detail.wxml-->
+<view class="container">
+  <!-- 状态卡片 -->
+  <view class="status-card status-{{reservation.status}}">
+    <view class="status-icon">
+      <text wx:if="{{reservation.status === 'PENDING'}}">⏳</text>
+      <text wx:if="{{reservation.status === 'APPROVED'}}">✓</text>
+      <text wx:if="{{reservation.status === 'REJECTED'}}">✕</text>
+      <text wx:if="{{reservation.status === 'CANCELLED'}}">⊗</text>
+      <text wx:if="{{reservation.status === 'COMPLETED'}}">★</text>
+    </view>
+    <view class="status-text">{{statusMap[reservation.status]}}</view>
+    <view class="status-tip" wx:if="{{reservation.status === 'PENDING'}}">
+      请耐心等待管理员审核
+    </view>
+    <view class="status-tip" wx:if="{{reservation.status === 'APPROVED'}}">
+      预约已通过，请按时到达实验室
+    </view>
+  </view>
+
+  <!-- 实验室信息 -->
+  <view class="section">
+    <view class="section-title">实验室信息</view>
+    <view class="lab-card" bindtap="goToLaboratory">
+      <image 
+        class="lab-image" 
+        src="{{reservation.laboratory.images[0] || '/images/lab-default.png'}}"
+        mode="aspectFill"
+      ></image>
+      <view class="lab-info">
+        <view class="lab-name">{{reservation.laboratory.name}}</view>
+        <view class="lab-location">📍 {{reservation.laboratory.location}}</view>
+        <view class="lab-capacity">👥 容纳人数：{{reservation.laboratory.capacity}}人</view>
+      </view>
+      <view class="lab-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 预约信息 -->
+  <view class="section">
+    <view class="section-title">预约信息</view>
+    <view class="info-card">
+      <view class="info-row">
+        <view class="info-label">预约编号</view>
+        <view class="info-value">{{reservation.id}}</view>
+      </view>
+      <view class="info-row">
+        <view class="info-label">预约日期</view>
+        <view class="info-value highlight">{{reservation.reservationDate}}</view>
+      </view>
+      <view class="info-row">
+        <view class="info-label">时间段</view>
+        <view class="info-value highlight">
+          {{reservation.timeslot.startTime}} - {{reservation.timeslot.endTime}}
+        </view>
+      </view>
+      <view class="info-row">
+        <view class="info-label">预约人数</view>
+        <view class="info-value">{{reservation.numberOfPeople}}人</view>
+      </view>
+      <view class="info-row">
+        <view class="info-label">预约目的</view>
+        <view class="info-value">{{reservation.purpose}}</view>
+      </view>
+      <view class="info-row" wx:if="{{reservation.notes}}">
+        <view class="info-label">备注说明</view>
+        <view class="info-value">{{reservation.notes}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 附件文档 -->
+  <view class="section" wx:if="{{reservation.documents && reservation.documents.length > 0}}">
+    <view class="section-title">附件文档</view>
+    <view class="documents">
+      <view 
+        class="document-item"
+        wx:for="{{reservation.documents}}"
+        wx:key="index"
+        bindtap="previewDocument"
+        data-url="{{item}}"
+      >
+        <view class="document-icon">📄</view>
+        <view class="document-name">文档{{index + 1}}</view>
+        <view class="document-action">查看</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 拒绝原因 -->
+  <view class="section" wx:if="{{reservation.status === 'REJECTED' && reservation.rejectionReason}}">
+    <view class="section-title">拒绝原因</view>
+    <view class="rejection-card">
+      <view class="rejection-icon">⚠️</view>
+      <view class="rejection-text">{{reservation.rejectionReason}}</view>
+    </view>
+  </view>
+
+  <!-- 时间信息 -->
+  <view class="section">
+    <view class="section-title">时间记录</view>
+    <view class="time-card">
+      <view class="time-row">
+        <view class="time-label">创建时间</view>
+        <view class="time-value">{{reservation.createdAt}}</view>
+      </view>
+      <view class="time-row">
+        <view class="time-label">更新时间</view>
+        <view class="time-value">{{reservation.updatedAt}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{reservation.status === 'PENDING' || reservation.status === 'APPROVED'}}">
+    <button 
+      class="action-btn cancel-btn"
+      wx:if="{{reservation.status === 'PENDING' || reservation.status === 'APPROVED'}}"
+      bindtap="cancelReservation"
+    >
+      取消预约
+    </button>
+    <button 
+      class="action-btn complete-btn"
+      wx:if="{{reservation.status === 'APPROVED'}}"
+      bindtap="completeReservation"
+    >
+      完成预约
+    </button>
+  </view>
+</view>

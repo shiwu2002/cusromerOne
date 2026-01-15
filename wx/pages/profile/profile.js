@@ -1,0 +1,310 @@
+// pages/profile/profile.js
+const api = require('../../api/index');
+
+Page({
+  data: {
+    userInfo: {},
+    stats: {
+      totalReservations: 0,
+      completedReservations: 0,
+      unreadMessages: 0
+    },
+    showEditModal: false,
+    showPasswordModal: false,
+    editForm: {
+      username: ''
+    },
+    passwordForm: {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  },
+
+  onLoad() {
+    this.loadUserInfo();
+    this.loadUserStats();
+  },
+
+  onShow() {
+    // 每次显示页面时刷新统计数据和未读消息数
+    this.loadUserStats();
+    this.updateTabBarBadge();
+  },
+
+  onPullDownRefresh() {
+    Promise.all([
+      this.loadUserInfo(),
+      this.loadUserStats()
+    ]).finally(() => {
+      wx.stopPullDownRefresh();
+    });
+  },
+
+  // 加载用户信息
+  async loadUserInfo() {
+    try {
+      wx.showLoading({ title: '加载中...' });
+      const res = await api.user.getProfile();
+      this.setData({ userInfo: res.data });
+    } catch (error) {
+      console.error('加载用户信息失败:', error);
+      // 如果是未登录，跳转到登录页
+      if (error.statusCode === 401) {
+        wx.redirectTo({ url: '/pages/login/login' });
+      }
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 加载用户统计数据
+  async loadUserStats() {
+    try {
+      // 并行加载预约统计和未读消息数
+      const [reservationsRes, messagesRes] = await Promise.all([
+        api.reservation.getMyReservations({ page: 1, limit: 1 }).catch(() => ({ data: { total: 0 } })),
+        api.message.getUnreadCount().catch(() => ({ data: { count: 0 } }))
+      ]);
+
+      // 获取已完成的预约数
+      const completedRes = await api.reservation.getMyReservations({
+        page: 1,
+        limit: 1,
+        status: 'COMPLETED'
+      }).catch(() => ({ data: { total: 0 } }));
+
+      this.setData({
+        stats: {
+          totalReservations: reservationsRes.data.total || 0,
+          completedReservations: completedRes.data.total || 0,
+          unreadMessages: messagesRes.data.count || 0
+        }
+      });
+    } catch (error) {
+      console.error('加载统计数据失败:', error);
+    }
+  },
+
+  // 更新tabBar徽标
+  async updateTabBarBadge() {
+    try {
+      const res = await api.message.getUnreadCount();
+      const count = res.data.count || 0;
+      if (count > 0) {
+        wx.setTabBarBadge({
+          index: 2,
+          text: count > 99 ? '99+' : String(count)
+        });
+      } else {
+        wx.removeTabBarBadge({ index: 2 });
+      }
+    } catch (error) {
+      console.error('更新徽标失败:', error);
+    }
+  },
+
+  // 更换头像
+  changeAvatar() {
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        const tempFilePath = res.tempFilePaths[0];
+        try {
+          wx.showLoading({ title: '上传中...' });
+          const uploadRes = await api.file.uploadAvatar(tempFilePath);
+          
+          // 更新用户头像
+          await api.user.updateProfile({
+            avatarUrl: uploadRes.data.url
+          });
+
+          // 重新加载用户信息
+          await this.loadUserInfo();
+          wx.showToast({ title: '头像更新成功', icon: 'success' });
+        } catch (error) {
+          console.error('上传头像失败:', error);
+          wx.showToast({ title: '上传失败', icon: 'none' });
+        } finally {
+          wx.hideLoading();
+        }
+      }
+    });
+  },
+
+  // 打开编辑资料弹窗
+  editProfile() {
+    this.setData({
+      showEditModal: true,
+      'editForm.username': this.data.userInfo.username || ''
+    });
+  },
+
+  // 关闭编辑资料弹窗
+  closeEditModal() {
+    this.setData({ showEditModal: false });
+  },
+
+  // 阻止冒泡
+  preventClose() {},
+
+  // 输入用户名
+  onUsernameInput(e) {
+    this.setData({
+      'editForm.username': e.detail.value
+    });
+  },
+
+  // 保存资料
+  async saveProfile() {
+    const { username } = this.data.editForm;
+    
+    if (!username || !username.trim()) {
+      wx.showToast({ title: '请输入用户名', icon: 'none' });
+      return;
+    }
+
+    try {
+      wx.showLoading({ title: '保存中...' });
+      await api.user.updateProfile({ username: username.trim() });
+      await this.loadUserInfo();
+      this.setData({ showEditModal: false });
+      wx.showToast({ title: '保存成功', icon: 'success' });
+    } catch (error) {
+      console.error('保存失败:', error);
+      wx.showToast({ title: error.message || '保存失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 打开修改密码弹窗
+  changePassword() {
+    this.setData({
+      showPasswordModal: true,
+      passwordForm: {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    });
+  },
+
+  // 关闭修改密码弹窗
+  closePasswordModal() {
+    this.setData({ showPasswordModal: false });
+  },
+
+  // 输入当前密码
+  onOldPasswordInput(e) {
+    this.setData({
+      'passwordForm.oldPassword': e.detail.value
+    });
+  },
+
+  // 输入新密码
+  onNewPasswordInput(e) {
+    this.setData({
+      'passwordForm.newPassword': e.detail.value
+    });
+  },
+
+  // 输入确认密码
+  onConfirmPasswordInput(e) {
+    this.setData({
+      'passwordForm.confirmPassword': e.detail.value
+    });
+  },
+
+  // 保存密码
+  async savePassword() {
+    const { oldPassword, newPassword, confirmPassword } = this.data.passwordForm;
+
+    // 验证
+    if (!oldPassword) {
+      wx.showToast({ title: '请输入当前密码', icon: 'none' });
+      return;
+    }
+    if (!newPassword) {
+      wx.showToast({ title: '请输入新密码', icon: 'none' });
+      return;
+    }
+    if (newPassword.length < 8 || newPassword.length > 20) {
+      wx.showToast({ title: '密码长度为8-20位', icon: 'none' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      wx.showToast({ title: '两次密码输入不一致', icon: 'none' });
+      return;
+    }
+
+    try {
+      wx.showLoading({ title: '修改中...' });
+      await api.user.changePassword({
+        oldPassword,
+        newPassword
+      });
+      this.setData({ showPasswordModal: false });
+      wx.showToast({ title: '密码修改成功', icon: 'success' });
+    } catch (error) {
+      console.error('修改密码失败:', error);
+      wx.showToast({ title: error.message || '修改失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 跳转到我的预约
+  goToMyReservations() {
+    wx.switchTab({ url: '/pages/my-reservations/my-reservations' });
+  },
+
+  // 跳转到消息中心
+  goToMessages() {
+    wx.switchTab({ url: '/pages/messages/messages' });
+  },
+
+  // 跳转到设置
+  goToSettings() {
+    wx.navigateTo({ url: '/pages/settings/settings' });
+  },
+
+  // 管理实验室（管理员）
+  manageLaboratories() {
+    wx.showToast({ title: '管理功能开发中', icon: 'none' });
+    // TODO: 实现管理员功能
+  },
+
+  // 管理预约（管理员）
+  manageReservations() {
+    wx.showToast({ title: '管理功能开发中', icon: 'none' });
+    // TODO: 实现管理员功能
+  },
+
+  // 管理用户（管理员）
+  manageUsers() {
+    wx.showToast({ title: '管理功能开发中', icon: 'none' });
+    // TODO: 实现管理员功能
+  },
+
+  // 退出登录
+  logout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '确定要退出登录吗？',
+      confirmColor: '#ff4757',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除本地存储的token
+          wx.removeStorageSync('token');
+          // 清除tabBar徽标
+          wx.removeTabBarBadge({ index: 2 });
+          // 跳转到登录页
+          wx.reLaunch({ url: '/pages/login/login' });
+        }
+      }
+    });
+  }
+});

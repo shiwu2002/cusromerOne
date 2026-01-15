@@ -1,0 +1,149 @@
+<!--pages/reservation/reservation.wxml-->
+<view class="container">
+  <!-- 实验室信息卡片 -->
+  <view class="lab-card">
+    <view class="lab-name">{{laboratory.name}}</view>
+    <view class="lab-info">
+      <text class="info-item">{{laboratory.type}}</text>
+      <text class="divider">|</text>
+      <text class="info-item">容纳{{laboratory.capacity}}人</text>
+      <text class="divider">|</text>
+      <text class="info-item">{{laboratory.location}}</text>
+    </view>
+  </view>
+
+  <!-- 预约表单 -->
+  <view class="form-section">
+    <!-- 日期选择 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text class="required">*</text>
+        <text>预约日期</text>
+      </view>
+      <picker 
+        mode="date" 
+        value="{{reservationDate}}" 
+        start="{{minDate}}"
+        end="{{maxDate}}"
+        bindchange="onDateChange"
+      >
+        <view class="picker-value">
+          {{reservationDate || '请选择日期'}}
+        </view>
+      </picker>
+    </view>
+
+    <!-- 时间段选择 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text class="required">*</text>
+        <text>预约时间段</text>
+      </view>
+      <view class="timeslot-selector" wx:if="{{timeslots.length > 0}}">
+        <view 
+          class="timeslot-option {{selectedTimeslotId === item.id ? 'selected' : ''}} {{item.reserved ? 'disabled' : ''}}"
+          wx:for="{{timeslots}}"
+          wx:key="id"
+          bindtap="selectTimeslot"
+          data-timeslot="{{item}}"
+        >
+          <view class="time-range">{{item.startTime}} - {{item.endTime}}</view>
+          <view class="time-status">{{item.reserved ? '已预约' : '可选'}}</view>
+        </view>
+      </view>
+      <view class="empty-timeslot" wx:else>
+        <text>{{reservationDate ? '该日期暂无可用时间段' : '请先选择日期'}}</text>
+      </view>
+    </view>
+
+    <!-- 预约人数 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text class="required">*</text>
+        <text>预约人数</text>
+      </view>
+      <view class="number-input">
+        <button class="number-btn" bindtap="decreaseNumber">-</button>
+        <input 
+          type="number" 
+          value="{{numberOfPeople}}" 
+          class="number-value"
+          bindinput="onNumberInput"
+        />
+        <button class="number-btn" bindtap="increaseNumber">+</button>
+      </view>
+      <view class="form-tip">最多可预约 {{laboratory.capacity}} 人</view>
+    </view>
+
+    <!-- 预约目的 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text class="required">*</text>
+        <text>预约目的</text>
+      </view>
+      <textarea 
+        class="textarea-input"
+        placeholder="请简要说明预约实验室的目的和用途"
+        value="{{purpose}}"
+        bindinput="onPurposeInput"
+        maxlength="200"
+      />
+      <view class="char-count">{{purpose.length}}/200</view>
+    </view>
+
+    <!-- 备注 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text>备注信息</text>
+      </view>
+      <textarea 
+        class="textarea-input"
+        placeholder="其他需要说明的信息（选填）"
+        value="{{notes}}"
+        bindinput="onNotesInput"
+        maxlength="200"
+      />
+      <view class="char-count">{{notes.length}}/200</view>
+    </view>
+
+    <!-- 文档上传 -->
+    <view class="form-item">
+      <view class="form-label">
+        <text>相关文档</text>
+      </view>
+      <view class="upload-area">
+        <view class="upload-list" wx:if="{{documents.length > 0}}">
+          <view class="upload-item" wx:for="{{documents}}" wx:key="index">
+            <text class="doc-name">{{item.name}}</text>
+            <text class="doc-remove" bindtap="removeDocument" data-index="{{index}}">×</text>
+          </view>
+        </view>
+        <button class="upload-btn" bindtap="uploadDocument">
+          <text class="upload-icon">+</text>
+          <text>上传文档</text>
+        </button>
+        <view class="form-tip">支持上传PDF、Word、Excel等文档，最多3个文件</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 预约须知 -->
+  <view class="notice-section">
+    <view class="notice-title">预约须知</view>
+    <view class="notice-content">
+      <view class="notice-item">1. 请提前至少1天预约，当天预约可能无法及时审核</view>
+      <view class="notice-item">2. 预约成功后请按时到场使用，超时15分钟视为爽约</view>
+      <view class="notice-item">3. 使用完毕后请保持实验室整洁，归还借用设备</view>
+      <view class="notice-item">4. 如需取消预约，请提前至少2小时操作</view>
+      <view class="notice-item">5. 恶意预约或多次爽约将被限制使用权限</view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-bar">
+    <button class="cancel-btn" bindtap="cancel">取消</button>
+    <button class="submit-btn" bindtap="submitReservation" disabled="{{submitting}}">
+      {{submitting ? '提交中...' : '提交预约'}}
+    </button>
+  </view>
+</view>

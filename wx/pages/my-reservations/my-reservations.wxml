@@ -1,0 +1,153 @@
+<!--pages/my-reservations/my-reservations.wxml-->
+<view class="container">
+  <!-- 顶部Tab切换 -->
+  <view class="tabs">
+    <view 
+      class="tab-item {{currentTab === 'all' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="all"
+    >
+      全部
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'PENDING' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="PENDING"
+    >
+      待审核
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'APPROVED' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="APPROVED"
+    >
+      已通过
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'REJECTED' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="REJECTED"
+    >
+      已拒绝
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'CANCELLED' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="CANCELLED"
+    >
+      已取消
+    </view>
+    <view 
+      class="tab-item {{currentTab === 'COMPLETED' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="COMPLETED"
+    >
+      已完成
+    </view>
+  </view>
+
+  <!-- 预约列表 -->
+  <scroll-view 
+    class="reservation-list" 
+    scroll-y 
+    bindscrolltolower="loadMore"
+    lower-threshold="100"
+  >
+    <view 
+      class="reservation-item"
+      wx:for="{{reservations}}"
+      wx:key="id"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <!-- 状态标签 -->
+      <view class="status-badge status-{{item.status}}">
+        {{statusMap[item.status]}}
+      </view>
+
+      <!-- 实验室信息 -->
+      <view class="lab-info">
+        <view class="lab-name">{{item.laboratory.name}}</view>
+        <view class="lab-location">{{item.laboratory.location}}</view>
+      </view>
+
+      <!-- 预约信息 -->
+      <view class="reservation-info">
+        <view class="info-row">
+          <text class="label">预约日期：</text>
+          <text class="value">{{item.reservationDate}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">时间段：</text>
+          <text class="value">{{item.timeslot.startTime}} - {{item.timeslot.endTime}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">预约人数：</text>
+          <text class="value">{{item.numberOfPeople}}人</text>
+        </view>
+        <view class="info-row">
+          <text class="label">预约目的：</text>
+          <text class="value">{{item.purpose}}</text>
+        </view>
+        <view class="info-row" wx:if="{{item.rejectionReason}}">
+          <text class="label">拒绝原因：</text>
+          <text class="value reason">{{item.rejectionReason}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="actions">
+        <button 
+          class="action-btn detail-btn"
+          size="mini"
+          bindtap="goToDetail"
+          data-id="{{item.id}}"
+        >
+          查看详情
+        </button>
+        <button 
+          class="action-btn cancel-btn"
+          size="mini"
+          wx:if="{{item.status === 'PENDING' || item.status === 'APPROVED'}}"
+          bindtap="cancelReservation"
+          data-id="{{item.id}}"
+          catchtap="preventBubble"
+        >
+          取消预约
+        </button>
+        <button 
+          class="action-btn complete-btn"
+          size="mini"
+          wx:if="{{item.status === 'APPROVED'}}"
+          bindtap="completeReservation"
+          data-id="{{item.id}}"
+          catchtap="preventBubble"
+        >
+          完成预约
+        </button>
+      </view>
+
+      <!-- 创建时间 -->
+      <view class="create-time">创建时间：{{item.createdAt}}</view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 没有更多 -->
+    <view class="no-more" wx:if="{{!hasMore && reservations.length > 0}}">
+      <text>没有更多了</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty" wx:if="{{!loading && reservations.length === 0}}">
+      <image src="/images/empty.png" class="empty-icon" mode="aspectFit"></image>
+      <text class="empty-text">暂无预约记录</text>
+      <navigator url="/pages/laboratory-list/laboratory-list" class="goto-lab-btn">
+        去预约实验室
+      </navigator>
+    </view>
+  </scroll-view>
+</view>

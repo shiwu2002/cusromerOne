@@ -1,0 +1,116 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 轮播图 -->
+  <swiper class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
+    <swiper-item wx:for="{{banners}}" wx:key="index">
+      <image src="{{item.image}}" mode="aspectFill" class="banner-image"></image>
+    </swiper-item>
+  </swiper>
+
+  <!-- 快捷入口 -->
+  <view class="quick-menu">
+    <view class="menu-item" bindtap="navigateToReservation">
+      <view class="menu-icon">
+        <text class="iconfont">📅</text>
+      </view>
+      <text class="menu-text">我要预约</text>
+    </view>
+    <view class="menu-item" bindtap="navigateToMyReservations">
+      <view class="menu-icon">
+        <text class="iconfont">📋</text>
+      </view>
+      <text class="menu-text">我的预约</text>
+    </view>
+    <view class="menu-item" bindtap="navigateToMessages">
+      <view class="menu-icon">
+        <text class="iconfont">✉️</text>
+        <view class="badge" wx:if="{{unreadCount > 0}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
+      </view>
+      <text class="menu-text">消息通知</text>
+    </view>
+    <view class="menu-item" bindtap="navigateToProfile">
+      <view class="menu-icon">
+        <text class="iconfont">👤</text>
+      </view>
+      <text class="menu-text">个人中心</text>
+    </view>
+  </view>
+
+  <!-- 公告栏 -->
+  <view class="notice-bar" wx:if="{{notice}}">
+    <text class="notice-icon">📢</text>
+    <swiper class="notice-swiper" vertical="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
+      <swiper-item>
+        <text class="notice-text">{{notice}}</text>
+      </swiper-item>
+    </swiper>
+  </view>
+
+  <!-- 推荐实验室 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">推荐实验室</text>
+      <text class="section-more" bindtap="navigateToLaboratoryList">查看全部 ></text>
+    </view>
+    <view class="lab-list">
+      <view class="lab-card" wx:for="{{laboratories}}" wx:key="id" bindtap="navigateToLaboratoryDetail" data-id="{{item.id}}">
+        <image src="{{item.imageUrl || '/images/default-lab.png'}}" mode="aspectFill" class="lab-image"></image>
+        <view class="lab-info">
+          <view class="lab-header">
+            <text class="lab-name">{{item.labName}}</text>
+            <view class="lab-status" wx:if="{{item.status === 1}}">
+              <text class="status-dot available"></text>
+              <text class="status-text">可用</text>
+            </view>
+            <view class="lab-status" wx:else>
+              <text class="status-dot unavailable"></text>
+              <text class="status-text">{{item.status === 0 ? '维护中' : '停用'}}</text>
+            </view>
+          </view>
+          <text class="lab-location">📍 {{item.location}}</text>
+          <view class="lab-meta">
+            <text class="lab-capacity">👥 容量: {{item.capacity}}人</text>
+            <text class="lab-type">🔬 {{item.labType}}</text>
+          </view>
+          <text class="lab-description">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{laboratories.length === 0 && !loading}}">
+      <text class="empty-icon">🔬</text>
+      <text class="empty-text">暂无推荐实验室</text>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+
+  <!-- 用户统计 -->
+  <view class="section" wx:if="{{statistics}}">
+    <view class="section-header">
+      <text class="section-title">我的预约统计</text>
+    </view>
+    <view class="statistics-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{statistics.pending || 0}}</text>
+        <text class="stat-label">待审核</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{statistics.approved || 0}}</text>
+        <text class="stat-label">已通过</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{statistics.completed || 0}}</text>
+        <text class="stat-label">已完成</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{statistics.cancelled || 0}}</text>
+        <text class="stat-label">已取消</text>
+      </view>
+    </view>
+  </view>
+</view>

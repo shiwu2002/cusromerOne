@@ -1,0 +1,100 @@
+<!--pages/laboratory-detail/laboratory-detail.wxml-->
+<view class="container">
+  <!-- 实验室图片轮播 -->
+  <swiper class="lab-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{5000}}" duration="{{500}}">
+    <swiper-item wx:for="{{laboratory.images}}" wx:key="index">
+      <image src="{{item}}" mode="aspectFill" class="lab-image" bindtap="previewImage" data-url="{{item}}" />
+    </swiper-item>
+    <swiper-item wx:if="{{!laboratory.images || laboratory.images.length === 0}}">
+      <image src="/assets/images/default-lab.png" mode="aspectFill" class="lab-image" />
+    </swiper-item>
+  </swiper>
+
+  <!-- 实验室基本信息 -->
+  <view class="info-section">
+    <view class="lab-header">
+      <view class="lab-name">{{laboratory.name}}</view>
+      <view class="lab-status" style="background-color: {{statusColor}}">{{statusText}}</view>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">实验室类型</text>
+      <text class="info-value">{{laboratory.type}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">容纳人数</text>
+      <text class="info-value">{{laboratory.capacity}}人</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">所在位置</text>
+      <text class="info-value">{{laboratory.location}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">联系电话</text>
+      <text class="info-value phone" bindtap="makePhoneCall">{{laboratory.contactPhone}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">负责人</text>
+      <text class="info-value">{{laboratory.admin.username}}</text>
+    </view>
+  </view>
+
+  <!-- 实验室描述 -->
+  <view class="description-section">
+    <view class="section-title">实验室介绍</view>
+    <view class="description-text">{{laboratory.description || '暂无介绍'}}</view>
+  </view>
+
+  <!-- 可用设备 -->
+  <view class="equipment-section" wx:if="{{laboratory.equipment && laboratory.equipment.length > 0}}">
+    <view class="section-title">可用设备</view>
+    <view class="equipment-list">
+      <view class="equipment-item" wx:for="{{laboratory.equipment}}" wx:key="index">
+        <text class="equipment-icon">•</text>
+        <text class="equipment-name">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 开放时间段 -->
+  <view class="timeslot-section">
+    <view class="section-title">
+      <text>开放时间段</text>
+      <view class="date-selector">
+        <text class="date-arrow" bindtap="previousDay">◀</text>
+        <text class="current-date" bindtap="selectDate">{{currentDateText}}</text>
+        <text class="date-arrow" bindtap="nextDay">▶</text>
+      </view>
+    </view>
+    
+    <view class="timeslot-list" wx:if="{{timeslots.length > 0}}">
+      <view 
+        class="timeslot-item {{item.reserved ? 'reserved' : 'available'}}" 
+        wx:for="{{timeslots}}" 
+        wx:key="id"
+        bindtap="selectTimeslot"
+        data-timeslot="{{item}}"
+      >
+        <view class="time-range">{{item.startTime}} - {{item.endTime}}</view>
+        <view class="time-status">{{item.reserved ? '已预约' : '可预约'}}</view>
+      </view>
+    </view>
+    
+    <view class="empty-timeslot" wx:else>
+      <text>该日期暂无开放时间段</text>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{laboratory.status === 'ACTIVE'}}">
+    <button class="reserve-btn" bindtap="navigateToReservation">立即预约</button>
+  </view>
+  
+  <view class="bottom-bar" wx:else>
+    <view class="unavailable-tip">该实验室暂不可预约</view>
+  </view>
+</view>

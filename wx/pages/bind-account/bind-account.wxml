@@ -1,0 +1,153 @@
+<!--pages/bind-account/bind-account.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="icon">🔗</text>
+    <text class="title">绑定账号</text>
+    <text class="desc">请绑定已有账号或注册新账号</text>
+  </view>
+
+  <view class="tabs">
+    <view 
+      class="tab {{activeTab === 0 ? 'active' : ''}}" 
+      bindtap="switchTab"
+      data-index="0"
+    >
+      登录绑定
+    </view>
+    <view 
+      class="tab {{activeTab === 1 ? 'active' : ''}}" 
+      bindtap="switchTab"
+      data-index="1"
+    >
+      注册绑定
+    </view>
+  </view>
+
+  <!-- 登录绑定表单 -->
+  <view class="form-section" wx:if="{{activeTab === 0}}">
+    <view class="input-group">
+          <view class="input-label">
+            <text class="icon">👤</text>
+            <text>用户名</text>
+          </view>
+          <input 
+            class="input-field" 
+            type="text" 
+            placeholder="请输入用户名"
+            value="{{loginForm.username}}"
+            bindinput="onLoginUsernameInput"
+          />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔒</text>
+        <text>密码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="{{showLoginPassword ? 'text' : 'password'}}" 
+        placeholder="请输入密码"
+        value="{{loginForm.password}}"
+        bindinput="onLoginPasswordInput"
+      />
+      <text class="toggle-password" bindtap="toggleLoginPassword">
+        {{showLoginPassword ? '👁️' : '👁️‍🗨️'}}
+      </text>
+    </view>
+
+    <button 
+      class="submit-btn" 
+      bindtap="handleLoginBind"
+      loading="{{loginLoading}}"
+      disabled="{{loginLoading}}"
+    >
+      {{loginLoading ? '绑定中...' : '登录并绑定'}}
+    </button>
+  </view>
+
+  <!-- 注册绑定表单 -->
+  <view class="form-section" wx:if="{{activeTab === 1}}">
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">👤</text>
+        <text>用户名</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="text" 
+        placeholder="请输入用户名"
+        value="{{registerForm.username}}"
+        bindinput="onRegisterUsernameInput"
+      />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">📧</text>
+        <text>邮箱</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="text" 
+        placeholder="请输入邮箱"
+        value="{{registerForm.email}}"
+        bindinput="onRegisterEmailInput"
+      />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔒</text>
+        <text>密码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="{{showRegisterPassword ? 'text' : 'password'}}" 
+        placeholder="请输入密码（6-20位）"
+        value="{{registerForm.password}}"
+        bindinput="onRegisterPasswordInput"
+      />
+      <text class="toggle-password" bindtap="toggleRegisterPassword">
+        {{showRegisterPassword ? '👁️' : '👁️‍🗨️'}}
+      </text>
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">📮</text>
+        <text>验证码</text>
+      </view>
+      <view class="code-input-wrapper">
+        <input 
+          class="input-field code-input" 
+          type="text" 
+          placeholder="请输入验证码"
+          value="{{registerForm.code}}"
+          bindinput="onRegisterCodeInput"
+        />
+        <button 
+          class="code-btn {{codeSending || countdown > 0 ? 'disabled' : ''}}" 
+          bindtap="sendRegisterCode"
+          disabled="{{codeSending || countdown > 0}}"
+        >
+          {{countdown > 0 ? countdown + 's' : (codeSending ? '发送中...' : '获取验证码')}}
+        </button>
+      </view>
+    </view>
+
+    <button 
+      class="submit-btn" 
+      bindtap="handleRegisterBind"
+      loading="{{registerLoading}}"
+      disabled="{{registerLoading}}"
+    >
+      {{registerLoading ? '注册中...' : '注册并绑定'}}
+    </button>
+  </view>
+
+  <view class="tip">
+    <text class="tip-icon">💡</text>
+    <text class="tip-text">绑定后可使用微信一键登录</text>
+  </view>
+</view>

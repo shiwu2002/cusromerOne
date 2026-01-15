@@ -1,0 +1,119 @@
+<!--pages/register/register.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">创建账号</text>
+    <text class="subtitle">加入实验室预约系统</text>
+  </view>
+
+  <view class="form-section">
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">👤</text>
+        <text>用户名</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="text" 
+        placeholder="请输入用户名"
+        value="{{username}}"
+        bindinput="onUsernameInput"
+      />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">📧</text>
+        <text>邮箱</text>
+      </view>
+      <view class="email-group">
+        <input 
+          class="input-field email-input" 
+          type="text" 
+          placeholder="请输入邮箱"
+          value="{{email}}"
+          bindinput="onEmailInput"
+        />
+        <button 
+          class="verify-btn" 
+          bindtap="sendVerificationCode"
+          disabled="{{codeCountdown > 0 || !email}}"
+        >
+          {{codeCountdown > 0 ? codeCountdown + 's' : '发送验证码'}}
+        </button>
+      </view>
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔢</text>
+        <text>验证码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="number" 
+        placeholder="请输入6位验证码"
+        value="{{verificationCode}}"
+        bindinput="onVerificationCodeInput"
+        maxlength="6"
+      />
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔒</text>
+        <text>密码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="{{showPassword ? 'text' : 'password'}}" 
+        placeholder="请输入密码（至少6位）"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+      />
+      <text class="toggle-password" bindtap="togglePassword">
+        {{showPassword ? '👁️' : '👁️‍🗨️'}}
+      </text>
+    </view>
+
+    <view class="input-group">
+      <view class="input-label">
+        <text class="icon">🔒</text>
+        <text>确认密码</text>
+      </view>
+      <input 
+        class="input-field" 
+        type="{{showConfirmPassword ? 'text' : 'password'}}" 
+        placeholder="请再次输入密码"
+        value="{{confirmPassword}}"
+        bindinput="onConfirmPasswordInput"
+      />
+      <text class="toggle-password" bindtap="toggleConfirmPassword">
+        {{showConfirmPassword ? '👁️' : '👁️‍🗨️'}}
+      </text>
+    </view>
+
+    <view class="agreement">
+      <label>
+        <checkbox checked="{{agreed}}" bindtap="toggleAgreement"/>
+        <text>我已阅读并同意</text>
+        <text class="link" bindtap="showAgreement">《用户协议》</text>
+        <text>和</text>
+        <text class="link" bindtap="showPrivacy">《隐私政策》</text>
+      </label>
+    </view>
+
+    <button 
+      class="register-btn" 
+      bindtap="handleRegister"
+      loading="{{loading}}"
+      disabled="{{loading || !agreed}}"
+    >
+      {{loading ? '注册中...' : '注册'}}
+    </button>
+
+    <view class="login-section">
+      <text>已有账号？</text>
+      <text class="login-link" bindtap="goToLogin">立即登录</text>
+    </view>
+  </view>
+</view>
