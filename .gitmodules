@@ -1,0 +1,3 @@
+[submodule "shiyanshi"]
+	path = shiyanshi
+	url = https://github.com/shiwu2002/shiyanshi.git
