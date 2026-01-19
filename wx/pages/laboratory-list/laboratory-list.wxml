@@ -16,19 +16,7 @@
   <!-- 筛选面板 -->
   <view class="filter-panel" wx:if="{{showFilter}}">
     <view class="filter-group">
-      <text class="filter-label">类型：</text>
-      <view class="filter-options">
-        <view class="filter-option {{selectedType === '' ? 'active' : ''}}" bindtap="selectType" data-type="">
-          全部
-        </view>
-        <view class="filter-option {{selectedType === item ? 'active' : ''}}" wx:for="{{labTypes}}" wx:key="index" bindtap="selectType" data-type="{{item}}">
-          {{item}}
-        </view>
-      </view>
-    </view>
-
-    <view class="filter-group">
-      <text class="filter-label">状态：</text>
+      <text class="filter-label">状态筛选：</text>
       <view class="filter-options">
         <view class="filter-option {{selectedStatus === null ? 'active' : ''}}" bindtap="selectStatus" data-status="{{null}}">
           全部
@@ -54,7 +42,7 @@
   <!-- 实验室列表 -->
   <view class="lab-list">
     <view class="lab-card" wx:for="{{laboratories}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
-      <image src="{{item.imageUrl || '/images/default-lab.png'}}" mode="aspectFill" class="lab-image"></image>
+      <image src="{{item.imageUrl}}" mode="aspectFill" class="lab-image" lazy-load></image>
       <view class="lab-info">
         <view class="lab-header">
           <text class="lab-name">{{item.labName}}</text>
@@ -64,7 +52,7 @@
           </view>
         </view>
         
-        <text class="lab-code">编号：{{item.labCode}}</text>
+        <text class="lab-code">编号：{{item.labNumber}}</text>
         <text class="lab-location">📍 {{item.location}}</text>
         
         <view class="lab-meta">
@@ -85,7 +73,7 @@
   <!-- 空状态 -->
   <view class="empty-state" wx:if="{{laboratories.length === 0 && !loading}}">
     <text class="empty-icon">🔬</text>
-    <text class="empty-text">{{keyword || selectedType || selectedStatus !== null ? '未找到符合条件的实验室' : '暂无实验室数据'}}</text>
+    <text class="empty-text">{{keyword || selectedStatus !== null ? '未找到符合条件的实验室' : '暂无实验室数据'}}</text>
     <button class="btn-refresh" bindtap="loadLaboratories">刷新</button>
   </view>
 

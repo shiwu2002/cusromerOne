@@ -45,8 +45,9 @@ Page({
   async loadUserInfo() {
     try {
       wx.showLoading({ title: '加载中...' });
-      const res = await api.user.getProfile();
-      this.setData({ userInfo: res.data });
+      const response = await api.user.getProfile();
+      const userInfo = response.data; // 提取实际数据
+      this.setData({ userInfo });
     } catch (error) {
       console.error('加载用户信息失败:', error);
       // 如果是未登录，跳转到登录页
@@ -62,23 +63,28 @@ Page({
   async loadUserStats() {
     try {
       // 并行加载预约统计和未读消息数
-      const [reservationsRes, messagesRes] = await Promise.all([
-        api.reservation.getMyReservations({ page: 1, limit: 1 }).catch(() => ({ data: { total: 0 } })),
-        api.message.getUnreadCount().catch(() => ({ data: { count: 0 } }))
+      const [reservationsResponse, messagesResponse] = await Promise.all([
+        api.reservation.getMyReservations({ page: 1, limit: 1 }).catch(() => ({ data: { data: { total: 0 } } })),
+        api.message.getUnreadCount().catch(() => ({ data: 0 }))
       ]);
+      
+      const reservationsData = reservationsResponse.data || { total: 0 };
+      const messagesCount = messagesResponse.data || 0;
 
       // 获取已完成的预约数
-      const completedRes = await api.reservation.getMyReservations({
+      const completedResponse = await api.reservation.getMyReservations({
         page: 1,
         limit: 1,
         status: 'COMPLETED'
-      }).catch(() => ({ data: { total: 0 } }));
+      }).catch(() => ({ data: { data: { total: 0 } } }));
+      
+      const completedData = completedResponse.data || { total: 0 };
 
       this.setData({
         stats: {
-          totalReservations: reservationsRes.data.total || 0,
-          completedReservations: completedRes.data.total || 0,
-          unreadMessages: messagesRes.data.count || 0
+          totalReservations: reservationsData.total || 0,
+          completedReservations: completedData.total || 0,
+          unreadMessages: messagesCount || 0
         }
       });
     } catch (error) {
@@ -89,8 +95,8 @@ Page({
   // 更新tabBar徽标
   async updateTabBarBadge() {
     try {
-      const res = await api.message.getUnreadCount();
-      const count = res.data.count || 0;
+      const response = await api.message.getUnreadCount();
+      const count = response.data || 0;
       if (count > 0) {
         wx.setTabBarBadge({
           index: 2,
@@ -114,11 +120,12 @@ Page({
         const tempFilePath = res.tempFilePaths[0];
         try {
           wx.showLoading({ title: '上传中...' });
-          const uploadRes = await api.file.uploadAvatar(tempFilePath);
+          const uploadResponse = await api.file.uploadAvatar(tempFilePath);
+          const uploadRes = uploadResponse.data; // 提取实际数据
           
           // 更新用户头像
           await api.user.updateProfile({
-            avatarUrl: uploadRes.data.url
+            avatarUrl: uploadRes.url
           });
 
           // 重新加载用户信息

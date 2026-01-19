@@ -1,9 +1,9 @@
 <!--pages/index/index.wxml-->
 <view class="container">
   <!-- 轮播图 -->
-  <swiper class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
-    <swiper-item wx:for="{{banners}}" wx:key="index">
-      <image src="{{item.image}}" mode="aspectFill" class="banner-image"></image>
+  <swiper wx:if="{{banners.length > 0}}" class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
+    <swiper-item wx:for="{{banners}}" wx:key="id">
+      <image src="{{item.image}}" mode="aspectFill" class="banner-image" lazy-load="{{true}}"></image>
     </swiper-item>
   </swiper>
 
@@ -37,11 +37,11 @@
   </view>
 
   <!-- 公告栏 -->
-  <view class="notice-bar" wx:if="{{notice}}">
+  <view class="notice-bar" wx:if="{{notices.length > 0}}">
     <text class="notice-icon">📢</text>
-    <swiper class="notice-swiper" vertical="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
-      <swiper-item>
-        <text class="notice-text">{{notice}}</text>
+    <swiper class="notice-swiper" vertical="{{true}}" autoplay="{{true}}" interval="{{4000}}" duration="{{500}}" circular="{{true}}">
+      <swiper-item wx:for="{{notices}}" wx:key="index">
+        <text class="notice-text">{{item}}</text>
       </swiper-item>
     </swiper>
   </view>
@@ -52,63 +52,72 @@
       <text class="section-title">推荐实验室</text>
       <text class="section-more" bindtap="navigateToLaboratoryList">查看全部 ></text>
     </view>
-    <view class="lab-list">
+
+    <!-- 骨架屏 -->
+    <view class="skeleton-list" wx:if="{{showSkeleton && laboratories.length === 0}}">
+      <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="*this">
+        <view class="skeleton-image"></view>
+        <view class="skeleton-info">
+          <view class="skeleton-line skeleton-title"></view>
+          <view class="skeleton-line skeleton-text"></view>
+          <view class="skeleton-line skeleton-text short"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 实验室列表 -->
+    <view class="lab-list" wx:else>
       <view class="lab-card" wx:for="{{laboratories}}" wx:key="id" bindtap="navigateToLaboratoryDetail" data-id="{{item.id}}">
-        <image src="{{item.imageUrl || '/images/default-lab.png'}}" mode="aspectFill" class="lab-image"></image>
+        <image src="{{item.imageUrl}}" mode="aspectFill" class="lab-image" lazy-load="{{true}}"></image>
         <view class="lab-info">
           <view class="lab-header">
             <text class="lab-name">{{item.labName}}</text>
-            <view class="lab-status" wx:if="{{item.status === 1}}">
-              <text class="status-dot available"></text>
-              <text class="status-text">可用</text>
-            </view>
-            <view class="lab-status" wx:else>
-              <text class="status-dot unavailable"></text>
-              <text class="status-text">{{item.status === 0 ? '维护中' : '停用'}}</text>
+            <view class="lab-status status-{{item.status === 1 ? 'available' : 'unavailable'}}">
+              <text class="status-dot"></text>
+              <text class="status-text">{{item.status === 1 ? '可用' : (item.status === 0 ? '维护中' : '停用')}}</text>
             </view>
           </view>
           <text class="lab-location">📍 {{item.location}}</text>
           <view class="lab-meta">
-            <text class="lab-capacity">👥 容量: {{item.capacity}}人</text>
+            <text class="lab-capacity">👥 {{item.capacity}}人</text>
             <text class="lab-type">🔬 {{item.labType}}</text>
           </view>
           <text class="lab-description">{{item.description}}</text>
         </view>
       </view>
-    </view>
 
-    <!-- 空状态 -->
-    <view class="empty-state" wx:if="{{laboratories.length === 0 && !loading}}">
-      <text class="empty-icon">🔬</text>
-      <text class="empty-text">暂无推荐实验室</text>
-    </view>
-
-    <!-- 加载状态 -->
-    <view class="loading-state" wx:if="{{loading}}">
-      <text class="loading-text">加载中...</text>
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{laboratories.length === 0 && !showSkeleton}}">
+        <text class="empty-icon">🔬</text>
+        <text class="empty-text">暂无推荐实验室</text>
+        <view class="empty-action">
+          <button class="empty-btn" bindtap="navigateToLaboratoryList">浏览全部实验室</button>
+        </view>
+      </view>
     </view>
   </view>
 
   <!-- 用户统计 -->
-  <view class="section" wx:if="{{statistics}}">
+  <view class="section statistics-section" wx:if="{{statistics}}">
     <view class="section-header">
       <text class="section-title">我的预约统计</text>
+      <text class="section-more" bindtap="navigateToMyReservations">查看详情 ></text>
     </view>
     <view class="statistics-grid">
-      <view class="stat-item">
-        <text class="stat-value">{{statistics.pending || 0}}</text>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-pending">{{statistics.pending || 0}}</text>
         <text class="stat-label">待审核</text>
       </view>
-      <view class="stat-item">
-        <text class="stat-value">{{statistics.approved || 0}}</text>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-approved">{{statistics.approved || 0}}</text>
         <text class="stat-label">已通过</text>
       </view>
-      <view class="stat-item">
-        <text class="stat-value">{{statistics.completed || 0}}</text>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-completed">{{statistics.completed || 0}}</text>
         <text class="stat-label">已完成</text>
       </view>
-      <view class="stat-item">
-        <text class="stat-value">{{statistics.cancelled || 0}}</text>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-cancelled">{{statistics.cancelled || 0}}</text>
         <text class="stat-label">已取消</text>
       </view>
     </view>

@@ -7,12 +7,13 @@ const request = require('../utils/request.js');
  * @returns {Promise}
  */
 function login(loginData) {
-  return request.post('/user/login', loginData, { skipAuth: true, noRedirectOn401: true }).then(res => {
-    // 实际数据在data字段中
-    const data = res.data || res;
+  return request.post('/user/login', loginData, { skipAuth: true, noRedirectOn401: true }).then(response => {
+    // 响应格式：{code: 200, message: "操作成功", data: {token, userId, username, userType, realName}, success: true}
+    // 实际数据在response.data字段中
+    const data = response.data;
     
     // 保存token和用户信息
-    if (data.token) {
+    if (data && data.token) {
       request.setToken(data.token);
       wx.setStorageSync('userInfo', {
         userId: data.userId,
@@ -21,7 +22,7 @@ function login(loginData) {
         realName: data.realName
       });
     }
-    return data;
+    return response;
   });
 }
 

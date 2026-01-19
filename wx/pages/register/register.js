@@ -96,7 +96,7 @@ Page({
     try {
       wx.showLoading({ title: '发送中...' });
       
-      await api.email.sendRegisterCode({ email });
+      const response = await api.email.sendRegisterCode({ email });
       
       wx.hideLoading();
       wx.showToast({
@@ -219,7 +219,7 @@ Page({
     this.setData({ loading: true });
 
     try {
-      await api.user.register({
+      const response = await api.user.register({
         username,
         email,
         password,

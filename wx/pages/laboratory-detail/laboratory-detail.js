@@ -44,28 +44,55 @@ Page({
   async loadLaboratoryDetail() {
     try {
       wx.showLoading({ title: '加载中...' });
-      const res = await api.laboratory.getLaboratoryById(this.data.labId);
+      const response = await api.laboratory.getLaboratoryDetail(this.data.labId);
+      
+      // 提取实际数据（request.js 返回的是完整响应对象）
+      const res = response.data;
+      
+      // 数据字段映射转换
+      const laboratory = {
+        id: res.id,
+        name: res.labName,
+        type: res.labType,
+        capacity: res.capacity,
+        location: res.location,
+        contactPhone: res.managerPhone,
+        description: res.description,
+        equipment: res.equipment ? res.equipment.split(',') : [],
+        images: res.images ? (Array.isArray(res.images) ? res.images : [res.images]) : [],
+        status: res.status,
+        building: res.building,
+        floor: res.floor,
+        labNumber: res.labNumber,
+        openTime: res.openTime,
+        admin: {
+          username: res.manager
+        }
+      };
       
       // 设置状态颜色和文本
       let statusColor = '';
       let statusText = '';
       switch (res.status) {
-        case 'ACTIVE':
+        case 1:
           statusColor = '#52c41a';
           statusText = '可用';
           break;
-        case 'MAINTENANCE':
+        case 0:
           statusColor = '#faad14';
           statusText = '维护中';
           break;
-        case 'INACTIVE':
+        case 2:
           statusColor = '#f5222d';
           statusText = '停用';
           break;
+        default:
+          statusColor = '#d9d9d9';
+          statusText = '未知';
       }
       
       this.setData({
-        laboratory: res,
+        laboratory: laboratory,
         statusColor,
         statusText
       });
@@ -230,7 +257,7 @@ Page({
 
   // 导航到预约页面
   navigateToReservation() {
-    if (this.data.laboratory.status !== 'ACTIVE') {
+    if (this.data.laboratory.status !== 1) {
       wx.showToast({
         title: '该实验室暂不可预约',
         icon: 'none'

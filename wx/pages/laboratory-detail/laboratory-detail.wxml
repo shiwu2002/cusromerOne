@@ -6,7 +6,7 @@
       <image src="{{item}}" mode="aspectFill" class="lab-image" bindtap="previewImage" data-url="{{item}}" />
     </swiper-item>
     <swiper-item wx:if="{{!laboratory.images || laboratory.images.length === 0}}">
-      <image src="/assets/images/default-lab.png" mode="aspectFill" class="lab-image" />
+      <image src="/images/shiyanshi.png" mode="aspectFill" class="lab-image" />
     </swiper-item>
   </swiper>
 
@@ -90,7 +90,7 @@
   </view>
 
   <!-- 底部操作栏 -->
-  <view class="bottom-bar" wx:if="{{laboratory.status === 'ACTIVE'}}">
+  <view class="bottom-bar" wx:if="{{laboratory.status === 1}}">
     <button class="reserve-btn" bindtap="navigateToReservation">立即预约</button>
   </view>
   

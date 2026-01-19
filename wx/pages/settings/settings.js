@@ -369,7 +369,7 @@ Page({
           try {
             wx.showLoading({ title: '注销中...' })
             
-            await api.user.deleteAccount()
+            const response = await api.user.deleteAccount()
             
             wx.hideLoading()
             

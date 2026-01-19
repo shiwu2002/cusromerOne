@@ -62,16 +62,17 @@ Page({
     this.setData({ loading: true });
 
     try {
-      const res = await api.message.getMessages({
+      const response = await api.message.getMessages({
         page: this.data.page,
         pageSize: this.data.pageSize
       });
+      const res = response.data; // 提取实际数据
 
-      const newList = this.data.page === 1 ? res.data : [...this.data.messageList, ...res.data];
+      const newList = this.data.page === 1 ? res : [...this.data.messageList, ...res];
       
       this.setData({
         messageList: newList,
-        noMore: res.data.length < this.data.pageSize
+        noMore: res.length < this.data.pageSize
       });
 
       if (this.data.page === 1) {
@@ -98,14 +99,15 @@ Page({
     });
 
     try {
-      const res = await api.message.getMessages({
+      const response = await api.message.getMessages({
         page: this.data.page,
         pageSize: this.data.pageSize
       });
+      const res = response.data; // 提取实际数据
 
       this.setData({
-        messageList: [...this.data.messageList, ...res.data],
-        noMore: res.data.length < this.data.pageSize
+        messageList: [...this.data.messageList, ...res],
+        noMore: res.length < this.data.pageSize
       });
     } catch (error) {
       console.error('加载更多消息失败:', error);
@@ -127,16 +129,17 @@ Page({
    */
   async loadUnreadCount() {
     try {
-      const res = await api.message.getUnreadCount();
+      const response = await api.message.getUnreadCount();
+      const res = response.data; // 提取实际数据
       this.setData({
-        unreadCount: res.data.count || 0
+        unreadCount: res.count || 0
       });
 
       // 更新tabBar徽标
-      if (res.data.count > 0) {
+      if (res.count > 0) {
         wx.setTabBarBadge({
           index: 2, // 消息tab的索引
-          text: res.data.count > 99 ? '99+' : res.data.count.toString()
+          text: res.count > 99 ? '99+' : res.count.toString()
         });
       } else {
         wx.removeTabBarBadge({
@@ -153,7 +156,7 @@ Page({
    */
   async markAllAsRead() {
     try {
-      await api.message.markAllAsRead();
+      const response = await api.message.markAllAsRead();
       
       // 更新列表中所有消息的已读状态
       const updatedList = this.data.messageList.map(item => ({
@@ -194,7 +197,7 @@ Page({
     // 如果消息未读，先标记为已读
     if (message && !message.isRead) {
       try {
-        await api.message.markAsRead(messageId);
+        const response = await api.message.markAsRead(messageId);
         
         // 更新列表中该消息的状态
         const updatedList = this.data.messageList.map(item => {

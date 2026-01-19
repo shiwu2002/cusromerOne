@@ -6,14 +6,13 @@ Page({
     // 搜索关键词
     keyword: '',
     // 筛选条件
-    selectedType: '',
     selectedStatus: null,
-    // 实验室类型列表
-    labTypes: ['物理实验室', '化学实验室', '生物实验室', '计算机实验室', '工程实验室'],
     // 显示筛选面板
     showFilter: false,
-    // 实验室列表
+    // 实验室列表（显示的数据）
     laboratories: [],
+    // 完整数据列表（用于前端分页）
+    allLaboratories: [],
     // 加载状态
     loading: false,
     // 分页相关
@@ -24,19 +23,11 @@ Page({
 
   onLoad(options) {
     // 从参数中获取初始筛选条件
-    if (options.type) {
-      this.setData({ selectedType: options.type })
-    }
     if (options.status) {
       this.setData({ selectedStatus: parseInt(options.status) })
     }
     
     this.loadLaboratories()
-  },
-
-  onShow() {
-    // 每次显示时刷新列表
-    this.loadLaboratories(true)
   },
 
   /**
@@ -45,50 +36,72 @@ Page({
   async loadLaboratories(refresh = false) {
     if (this.data.loading) return
 
-    // 如果是刷新，重置分页
-    if (refresh) {
-      this.setData({
-        page: 1,
-        laboratories: [],
-        hasMore: true
-      })
-    }
-
     try {
-      this.setData({ loading: true })
-
-      let res
-      const { keyword, selectedType, selectedStatus } = this.data
-
-      // 根据条件选择不同的API
-      if (keyword || selectedType || selectedStatus !== null) {
-        // 使用搜索接口
-        res = await api.laboratory.searchLaboratories({
-          keyword,
-          labType: selectedType || undefined,
-          status: selectedStatus !== null ? selectedStatus : undefined
+      // 如果是刷新，先清空列表并重置分页
+      if (refresh) {
+        this.setData({
+          loading: true,
+          page: 1,
+          laboratories: [],
+          allLaboratories: [],
+          hasMore: true
         })
       } else {
+        this.setData({ loading: true })
+      }
+
+      let response
+      const { keyword, selectedStatus } = this.data
+
+      // 使用搜索接口（支持keyword和status参数）
+      if (keyword || selectedStatus !== null) {
+        const params = {}
+        if (keyword) params.keyword = keyword
+        if (selectedStatus !== null) params.status = selectedStatus
+        response = await api.laboratory.searchLaboratories(params)
+      } else {
         // 获取所有实验室
-        res = await api.laboratory.getAllLaboratories()
+        response = await api.laboratory.getAllLaboratories()
       }
 
-      if (res.success && res.data) {
-        const laboratories = Array.isArray(res.data) ? res.data : []
-        
-        if (refresh) {
-          this.setData({ laboratories })
+      console.log('API返回数据:', response)
+
+      // 提取实际数据
+      let allLaboratories = []
+      if (response && response.data) {
+        const res = response.data
+        if (Array.isArray(res)) {
+          allLaboratories = res
         } else {
-          this.setData({
-            laboratories: [...this.data.laboratories, ...laboratories]
+          console.error('API返回数据格式异常:', response)
+          wx.showToast({
+            title: '数据格式错误',
+            icon: 'none'
           })
+          return
         }
-
-        // 判断是否还有更多数据
-        this.setData({
-          hasMore: laboratories.length >= this.data.pageSize
+      } else {
+        console.error('API返回数据格式异常:', response)
+        wx.showToast({
+          title: '数据格式错误',
+          icon: 'none'
         })
+        return
       }
+      
+      console.log('解析后的实验室列表:', allLaboratories)
+      
+      // 为没有图片的实验室添加默认图片
+      allLaboratories = allLaboratories.map(lab => ({
+        ...lab,
+        imageUrl: lab.imageUrl || '/images/shiyanshi.png'
+      }))
+      
+      // 存储完整数据，用于前端分页
+      this.setData({ allLaboratories })
+      
+      // 显示第一页数据
+      this.showPageData()
     } catch (error) {
       console.error('加载实验室列表失败:', error)
       wx.showToast({
@@ -98,6 +111,22 @@ Page({
     } finally {
       this.setData({ loading: false })
     }
+  },
+
+  /**
+   * 显示当前页的数据
+   */
+  showPageData() {
+    const { allLaboratories, page, pageSize } = this.data
+    const startIndex = 0
+    const endIndex = page * pageSize
+    const laboratories = allLaboratories.slice(startIndex, endIndex)
+    const hasMore = endIndex < allLaboratories.length
+
+    this.setData({
+      laboratories,
+      hasMore
+    })
   },
 
   /**
@@ -131,14 +160,6 @@ Page({
   },
 
   /**
-   * 选择类型
-   */
-  selectType(e) {
-    const type = e.currentTarget.dataset.type
-    this.setData({ selectedType: type })
-  },
-
-  /**
    * 选择状态
    */
   selectStatus(e) {
@@ -151,7 +172,6 @@ Page({
    */
   resetFilter() {
     this.setData({
-      selectedType: '',
       selectedStatus: null
     })
   },
@@ -171,7 +191,7 @@ Page({
   loadMore() {
     if (this.data.hasMore && !this.data.loading) {
       this.setData({ page: this.data.page + 1 }, () => {
-        this.loadLaboratories()
+        this.showPageData()
       })
     }
   },

@@ -35,6 +35,11 @@ function request(options) {
       data: options.data || {},
       header: header,
       success: (res) => {
+        console.log(`[Request] ${options.method} ${url}`, {
+          statusCode: res.statusCode,
+          data: res.data
+        })
+        
         // 统一处理响应
         if (res.statusCode === 200) {
           const data = res.data;
@@ -43,9 +48,11 @@ function request(options) {
           // 2) { code: 200, message: 'xxx', data: {...} }
           const ok = data && (data.success === true || data.code === 200);
           if (ok) {
-            resolve(data.data !== undefined ? data.data : data);
+            // 直接返回完整的响应对象，让调用方自己处理
+            resolve(data);
           } else {
             // 业务失败
+            console.error('[Request Error]', data)
             wx.showToast({
               title: data.message || '请求失败',
               icon: 'none',

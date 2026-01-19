@@ -65,9 +65,23 @@ Page({
   // 加载实验室详情
   async loadLaboratoryDetail() {
     try {
-      const res = await api.laboratory.getLaboratoryById(this.data.labId);
+      const response = await api.laboratory.getLaboratoryDetail(this.data.labId);
+      const res = response.data; // 提取实际数据
+      
+      // 数据字段映射
+      const laboratory = {
+        id: res.id,
+        name: res.labName || res.name,
+        type: res.labType || res.type,
+        location: res.labLocation || res.location,
+        capacity: res.labCapacity || res.capacity,
+        description: res.labDescription || res.description,
+        imageUrl: res.imageUrl || '/images/shiyanshi.png',
+        status: res.status
+      };
+      
       this.setData({ 
-        laboratory: res,
+        laboratory,
         numberOfPeople: 1
       });
     } catch (error) {
@@ -85,11 +99,12 @@ Page({
     }
     
     try {
-      const res = await api.timeslot.getAvailableTimeslots(
+      const response = await api.timeslot.getAvailableTimeslots(
         this.data.labId,
         this.data.reservationDate
       );
-      this.setData({ timeslots: res });
+      const res = response.data; // 提取实际数据
+      this.setData({ timeslots: Array.isArray(res) ? res : [] });
     } catch (error) {
       console.error('加载时间段失败:', error);
       this.setData({ timeslots: [] });
@@ -187,7 +202,8 @@ Page({
         
         try {
           const uploadPromises = res.tempFiles.map(async (file) => {
-            const uploadRes = await api.file.uploadDocument(file.path);
+            const response = await api.file.uploadDocument(file.path);
+            const uploadRes = response.data; // 提取实际数据
             return {
               name: file.name,
               url: uploadRes.url
@@ -269,13 +285,14 @@ Page({
     
     try {
       // 先检查冲突
-      const conflictCheck = await api.reservation.checkConflict(
+      const conflictResponse = await api.reservation.checkConflict(
         this.data.labId,
         this.data.selectedTimeslotId,
         this.data.reservationDate
       );
+      const conflictCheck = conflictResponse.data; // 提取实际数据
       
-      if (conflictCheck.hasConflict) {
+      if (conflictCheck && conflictCheck.hasConflict) {
         wx.showModal({
           title: '预约冲突',
           content: '该时间段已被其他用户预约，请选择其他时间段',

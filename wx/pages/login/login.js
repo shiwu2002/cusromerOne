@@ -106,7 +106,8 @@ Page({
       }
 
       // 2) 后端换取 openid/sessionKey，并判断是否已绑定
-      const res = await wechatApi.login(wxRes.code);
+      const response = await wechatApi.login(wxRes.code);
+      const res = response.data;
       // wechatApi.login 内部已在 needBind=false 且存在 token 时保存 token 与用户信息
 
       if (res && res.needBind === false) {
@@ -168,12 +169,14 @@ Page({
       const unionid = wx.getStorageSync('wechat_unionid');
 
       // 登录时携带 openid/unionid，后端自动绑定（sessionKey 后端已保存）
-      const data = await userApi.login({
+      const response = await userApi.login({
         username,
         password,
         openid,
         unionid
       });
+      // 响应格式：{code: 200, message: "操作成功", data: {token, userId, username, userType, realName, wechatBound, bindWarning}, success: true}
+      const data = response.data;
 
       // 清除临时存储的微信信息
       wx.removeStorageSync('wechat_openid');
@@ -236,13 +239,15 @@ Page({
       const unionid = wx.getStorageSync('wechat_unionid');
 
       // 注册时携带 openid/unionid，后端自动绑定
-      const data = await userApi.register({
+      const response = await userApi.register({
         username,
         password,
         email,
         openid,
         unionid
       });
+      // 响应格式：{code: 200, message: "操作成功", data: {token, userId, username, userType, realName}, success: true}
+      const data = response.data;
 
       // 如果注册返回了 token 与用户信息，直接保存；否则兼容走一次登录以确保 token 就绪
       if (data && data.token) {
@@ -251,10 +256,10 @@ Page({
           userId: data.userId,
           username: data.username,
           userType: data.userType,
-          realName: data.realName,
-          email: data.email
+          realName: data.realName
         });
       } else {
+        // 如果注册接口没返回token，需要重新登录获取
         await userApi.login({ username, password, openid, unionid });
       }
 

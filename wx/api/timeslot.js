@@ -35,9 +35,23 @@ function getTimeSlotDetail(id) {
   return request.get(`/timeslot/${id}`);
 }
 
+/**
+ * 查询可用时间段
+ * @param {number} labId 实验室ID
+ * @param {string} date 日期 (格式: YYYY-MM-DD)
+ * @returns {Promise}
+ */
+function getAvailableTimeslots(labId, date) {
+  return request.get(`/timeslot/available`, {
+    labId: labId,
+    date: date
+  });
+}
+
 module.exports = {
   getAllTimeSlots,
   getEnabledTimeSlots,
   getTimeSlotsByStatus,
-  getTimeSlotDetail
+  getTimeSlotDetail,
+  getAvailableTimeslots
 };

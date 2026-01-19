@@ -80,7 +80,7 @@ Page({
     try {
       wx.showLoading({ title: '发送中...' });
       
-      await api.email.sendPasswordResetCode({ email });
+      const response = await api.email.sendPasswordResetCode({ email });
       
       wx.hideLoading();
       wx.showToast({
@@ -187,7 +187,7 @@ Page({
     this.setData({ loading: true });
 
     try {
-      await api.user.resetPassword({
+      const response = await api.user.resetPassword({
         email,
         newPassword,
         verificationCode

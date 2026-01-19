@@ -64,10 +64,11 @@ Page({
         params.status = this.data.currentTab;
       }
 
-      const res = await api.reservation.getMyReservations(params);
+      const response = await api.reservation.getMyReservations(params);
+      const res = response.data; // 提取实际数据
 
       // 格式化日期时间
-      const formattedList = res.data.map(item => ({
+      const formattedList = res.map(item => ({
         ...item,
         createdAt: this.formatDateTime(item.createdAt),
         reservationDate: this.formatDate(item.reservationDate)
@@ -76,7 +77,7 @@ Page({
       this.setData({
         reservations: [...this.data.reservations, ...formattedList],
         page: this.data.page + 1,
-        hasMore: res.data.length === this.data.pageSize,
+        hasMore: res.length === this.data.pageSize,
         loading: false
       });
     } catch (error) {
@@ -125,7 +126,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '取消中...' });
-            await api.reservation.cancelReservation(id);
+            const response = await api.reservation.cancelReservation(id);
             wx.hideLoading();
             
             wx.showToast({
@@ -159,7 +160,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '提交中...' });
-            await api.reservation.completeReservation(id);
+            const response = await api.reservation.completeReservation(id);
             wx.hideLoading();
             
             wx.showToast({

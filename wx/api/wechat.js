@@ -17,19 +17,22 @@ const wechatApi = {
       data: { code },
       skipAuth: true, // 此接口无需携带token
       noRedirectOn401: true
-    }).then(res => {
-      // 后端返回的数据结构为data，包含needBind、token、用户信息及openid/unionid
-      // 若已绑定则直接保存token与用户信息
-      if (res && res.needBind === false && res.token) {
-        req.setToken(res.token);
+    }).then(response => {
+      // 响应格式：{code: 200, message: "操作成功", data: {needBind, token, userId, username, userType, realName, openid, unionid}, success: true}
+      // 实际数据在response.data字段中
+      const data = response.data;
+      
+      // 若已绑定（needBind=false）且有token，则直接保存token与用户信息
+      if (data && data.needBind === false && data.token) {
+        req.setToken(data.token);
         wx.setStorageSync('userInfo', {
-          userId: res.userId,
-          username: res.username,
-          userType: res.userType,
-          realName: res.realName
+          userId: data.userId,
+          username: data.username,
+          userType: data.userType,
+          realName: data.realName
         });
       }
-      return res;
+      return response;
     });
   },
 

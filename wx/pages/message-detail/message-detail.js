@@ -40,14 +40,15 @@ Page({
     wx.showLoading({ title: '加载中...' });
 
     try {
-      const res = await api.message.getMessageById(this.data.messageId);
+      const response = await api.message.getMessageById(this.data.messageId);
+      const res = response.data; // 提取实际数据
       this.setData({
-        messageDetail: res.data
+        messageDetail: res
       });
 
       // 如果消息关联了预约，加载预约详情
-      if (res.data.reservationId) {
-        await this.loadReservationDetail(res.data.reservationId);
+      if (res.reservationId) {
+        await this.loadReservationDetail(res.reservationId);
       }
 
       // 根据消息类型设置操作按钮
@@ -70,9 +71,10 @@ Page({
    */
   async loadReservationDetail(reservationId) {
     try {
-      const res = await api.reservation.getReservationById(reservationId);
+      const response = await api.reservation.getReservationById(reservationId);
+      const res = response.data; // 提取实际数据
       this.setData({
-        reservationDetail: res.data
+        reservationDetail: res
       });
     } catch (error) {
       console.error('加载预约详情失败:', error);
@@ -189,7 +191,7 @@ Page({
         if (res.confirm) {
           try {
             wx.showLoading({ title: '取消中...' });
-            await api.reservation.cancelReservation(reservationId);
+            const response = await api.reservation.cancelReservation(reservationId);
             wx.hideLoading();
             
             wx.showToast({
