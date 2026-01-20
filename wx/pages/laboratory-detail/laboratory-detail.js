@@ -230,8 +230,18 @@ Page({
     }
     
     // 跳转到预约页面
+    const url = `/pages/reservation/reservation?labId=${this.data.labId}&timeslotId=${timeslot.id}&date=${this.data.currentDate}`;
+    console.log('Navigating to reservation with URL:', url);
+
     wx.navigateTo({
-      url: `/pages/reservation/reservation?labId=${this.data.labId}&timeslotId=${timeslot.id}&date=${this.data.currentDate}`
+      url: url,
+      fail: (err) => {
+        console.error('跳转到预约页面失败:', err);
+        wx.showToast({
+          title: '跳转失败，请重试',
+          icon: 'none'
+        });
+      }
     });
   },
 
@@ -265,8 +275,20 @@ Page({
       return;
     }
     
+    // 确保传递 labId 参数，并在可能的情况下携带当前选中的日期
+    // 注意：这里的 this.data.labId 应该是数字类型或可以正确转换为数字的字符串
+    const url = `/pages/reservation/reservation?labId=${this.data.labId}&date=${this.data.currentDate}`;
+    console.log('Navigating to reservation with URL:', url);
+    
     wx.navigateTo({
-      url: `/pages/reservation/reservation?labId=${this.data.labId}`
+      url: url,
+      fail: (err) => {
+        console.error('跳转到预约页面失败:', err);
+        wx.showToast({
+          title: '跳转失败，请重试',
+          icon: 'none'
+        });
+      }
     });
   },
 

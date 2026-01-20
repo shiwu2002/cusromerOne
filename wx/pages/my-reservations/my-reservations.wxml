@@ -143,7 +143,7 @@
 
     <!-- 空状态 -->
     <view class="empty" wx:if="{{!loading && reservations.length === 0}}">
-      <image src="/images/empty.png" class="empty-icon" mode="aspectFit"></image>
+      <view class="empty-icon">📋</view>
       <text class="empty-text">暂无预约记录</text>
       <navigator url="/pages/laboratory-list/laboratory-list" class="goto-lab-btn">
         去预约实验室

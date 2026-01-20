@@ -19,27 +19,46 @@ Page({
   },
 
   onLoad(options) {
-    if (options.labId) {
-      this.setData({ labId: options.labId });
+    console.log('Reservation Page onLoad options:', options);
+    // 处理 labId 可能为 undefined 或其他假值的情况
+    // 并尝试从 options 中解析出有效的 labId
+    let labId = options.labId;
+    
+    // 如果没有直接传递 labId，尝试解析 scene (小程序码扫描进入)
+    if (!labId && options.scene) {
+        const scene = decodeURIComponent(options.scene);
+        // 假设 scene 格式为 labId=123
+        const match = scene.match(/labId=(\d+)/);
+        if (match) {
+            labId = match[1];
+        }
+    }
+
+    if (labId) {
+      this.setData({ labId: labId });
       this.loadLaboratoryDetail();
       this.initDateRange();
       
       // 如果传入了日期和时间段ID，直接设置
       if (options.date) {
         this.setData({ reservationDate: options.date });
+        // 确保 loadTimeslots 在 setData 完成后调用，虽然 setData 是同步更新数据字段，但为了稳妥可以这样写
         this.loadTimeslots();
       }
       if (options.timeslotId) {
-        this.setData({ selectedTimeslotId: parseInt(options.timeslotId) });
+        // 确保 timeslotId 转为数字，与 timeslots 数组中的 id 类型一致
+        this.setData({ selectedTimeslotId: parseInt(options.timeslotId, 10) });
       }
     } else {
+      console.error('Reservation page missing labId parameter');
       wx.showToast({
-        title: '参数错误',
-        icon: 'error'
+        title: '参数错误: 缺少实验室ID',
+        icon: 'none',
+        duration: 2000
       });
       setTimeout(() => {
         wx.navigateBack();
-      }, 1500);
+      }, 2000);
     }
   },
 
@@ -162,9 +181,18 @@ Page({
 
   // 人数输入
   onNumberInput(e) {
+    // 允许输入过程中的空值或数字
+    const value = e.detail.value;
+    this.setData({ numberOfPeople: value });
+  },
+
+  // 人数输入框失焦处理
+  onNumberBlur(e) {
     let value = parseInt(e.detail.value) || 1;
     if (value < 1) value = 1;
-    if (value > this.data.laboratory.capacity) {
+    
+    // 如果容量已加载，则进行校验
+    if (this.data.laboratory.capacity && value > this.data.laboratory.capacity) {
       value = this.data.laboratory.capacity;
       wx.showToast({
         title: `最多可预约${this.data.laboratory.capacity}人`,
@@ -284,36 +312,61 @@ Page({
     this.setData({ submitting: true });
     
     try {
+      // 获取当前选择的时间段信息
+      const selectedTimeslot = this.data.timeslots.find(t => t.id === this.data.selectedTimeslotId);
+      if (!selectedTimeslot) {
+        throw new Error('无效的时间段');
+      }
+
+      // 构建时间段字符串 HH:mm-HH:mm
+      const timeSlotStr = `${selectedTimeslot.startTime}-${selectedTimeslot.endTime}`;
+
       // 先检查冲突
       const conflictResponse = await api.reservation.checkConflict(
         this.data.labId,
-        this.data.selectedTimeslotId,
-        this.data.reservationDate
+        this.data.reservationDate,
+        timeSlotStr
       );
-      const conflictCheck = conflictResponse.data; // 提取实际数据
       
-      if (conflictCheck && conflictCheck.hasConflict) {
-        wx.showModal({
-          title: '预约冲突',
-          content: '该时间段已被其他用户预约，请选择其他时间段',
-          showCancel: false
-        });
-        this.setData({ submitting: false });
-        return;
-      }
+      // 注意：根据接口文档，成功响应（无冲突）返回200，错误响应（有冲突）返回500
+      // utils/request.js 封装中，code != 200 会进入 catch，或者在 then 中 resolve 但 data.success 为 false (取决于具体实现，这里假设 checkConflict 返回标准结构)
+      // 如果后端在有冲突时直接抛出错误状态码，则会在 catch 块中处理
+      // 这里根据 API 描述: 成功响应(无冲突) code: 200; 错误响应(有冲突) code: 500
       
       // 创建预约
-      const documentUrls = this.data.documents.map(doc => doc.url);
+      // 根据提供的 API 文档，参数为 userId(必填), labId(必填), reserveDate(必填), timeSlot(必填), purpose(可选), remark(可选)
       
-      await api.reservation.createReservation({
-        laboratoryId: this.data.labId,
-        timeslotId: this.data.selectedTimeslotId,
-        reservationDate: this.data.reservationDate,
-        numberOfPeople: this.data.numberOfPeople,
+      const userInfo = wx.getStorageSync('userInfo');
+      if (!userInfo || !userInfo.userId) {
+        throw new Error('获取用户信息失败，请重新登录');
+      }
+
+      // 最终确认字段名：
+      // userId: 从token获取或显式传递
+      // labId: 实验室ID (注意后端日志显示 labId 为 null，说明之前传递 laboratoryId 也是错的，或者后端期望 labId)
+      // reserveDate: 预约日期
+      // timeSlot: 时间段字符串 (注意后端日志显示 timeSlot 为 null)
+      // peopleNum: 人数
+      // purpose: 目的
+      // remark: 备注
+      
+      const reservationData = {
+        userId: userInfo.userId, 
+        labId: parseInt(this.data.labId), // 修正回 labId
+        reserveDate: this.data.reservationDate, // 修正回 reserveDate
+        timeSlot: timeSlotStr, // 修正回 timeSlot (传字符串 HH:mm-HH:mm)
         purpose: this.data.purpose,
-        notes: this.data.notes || undefined,
-        documents: documentUrls.length > 0 ? documentUrls : undefined
-      });
+        peopleNum: this.data.numberOfPeople,
+        remark: this.data.notes || ''
+      };
+
+      // 如果有文档，将文档链接追加到备注中（临时方案，直至 API 支持文档字段）
+      if (this.data.documents.length > 0) {
+         const docLinks = this.data.documents.map(d => `[文档: ${d.name}](${d.url})`).join('\n');
+         reservationData.remark = (reservationData.remark ? reservationData.remark + '\n' : '') + docLinks;
+      }
+      
+      await api.reservation.createReservation(reservationData);
       
       wx.showToast({
         title: '预约成功',
@@ -322,15 +375,27 @@ Page({
       });
       
       setTimeout(() => {
+        // 使用 switchTab 跳转到 tabbar 页面，或者 redirectTo 跳转到普通页面
+        // 假设 my-reservations 是普通页面
         wx.navigateTo({
           url: '/pages/my-reservations/my-reservations'
         });
       }, 2000);
       
     } catch (error) {
+      console.error('预约提交失败:', error);
+      let errorMessage = '预约失败';
+      
+      // 处理冲突检测返回的 500 错误或其他业务错误
+      if (error && error.msg) {
+        errorMessage = error.msg;
+      } else if (error && error.message) {
+        errorMessage = error.message;
+      }
+      
       wx.showToast({
-        title: error.message || '预约失败',
-        icon: 'error'
+        title: errorMessage,
+        icon: 'none'
       });
       this.setData({ submitting: false });
     }

@@ -59,20 +59,90 @@ Page({
         pageSize: this.data.pageSize
       };
 
-      // 如果不是全部，添加状态筛选
+      // 如果不是全部，添加状态筛选（转换为后端需要的数字状态码）
       if (this.data.currentTab !== 'all') {
-        params.status = this.data.currentTab;
+        const statusMap = {
+          'PENDING': 0,
+          'APPROVED': 1,
+          'REJECTED': 2,
+          'CANCELLED': 3,
+          'COMPLETED': 4
+        };
+        // 只有当映射存在时才添加筛选，避免传递undefined
+        if (statusMap[this.data.currentTab] !== undefined) {
+          params.status = statusMap[this.data.currentTab];
+        }
       }
 
       const response = await api.reservation.getMyReservations(params);
-      const res = response.data; // 提取实际数据
+      
+      // 修复：处理不同的响应结构 (数组 vs 分页对象)
+      let res = [];
+      if (Array.isArray(response.data)) {
+        res = response.data;
+      } else if (response.data && (Array.isArray(response.data.records) || Array.isArray(response.data.list))) {
+        res = response.data.records || response.data.list;
+      } else if (response.data && typeof response.data === 'object') {
+          // 兼容单条对象返回的情况（虽然不太可能是列表接口，但为了稳健）
+          res = [response.data];
+      } else {
+        console.warn('Load reservations unexpected data format:', response.data);
+        res = [];
+      }
 
-      // 格式化日期时间
-      const formattedList = res.map(item => ({
-        ...item,
-        createdAt: this.formatDateTime(item.createdAt),
-        reservationDate: this.formatDate(item.reservationDate)
-      }));
+      // 格式化数据以匹配 WXML 视图层绑定
+      const formattedList = res.map(item => {
+        // 状态码转换：数字 -> 字符串枚举
+        const statusEnumMap = {
+          0: 'PENDING',
+          1: 'APPROVED',
+          2: 'REJECTED',
+          3: 'CANCELLED',
+          4: 'COMPLETED'
+        };
+        
+        // 解析时间段字符串 "08:00-10:00"
+        let startTime = '';
+        let endTime = '';
+        if (item.timeSlot && typeof item.timeSlot === 'string' && item.timeSlot.includes('-')) {
+          [startTime, endTime] = item.timeSlot.split('-');
+        }
+
+        // 数据字段映射
+        return {
+          ...item,
+          id: item.id,
+          // 转换状态码，默认为 PENDING
+          status: statusEnumMap[item.status] || 'PENDING',
+          
+          // 适配 laboratory 对象结构
+          laboratory: {
+            name: item.labName || '',
+            location: item.labLocation || '' // API可能未返回 location
+          },
+          
+          // 适配日期字段名 reserveDate -> reservationDate
+          reservationDate: this.formatDate(item.reserveDate || item.reservationDate),
+          
+          // 适配时间段对象结构
+          timeslot: {
+            startTime: startTime,
+            endTime: endTime
+          },
+          
+          // 适配人数字段 peopleNum -> numberOfPeople
+          numberOfPeople: item.peopleNum || item.numberOfPeople,
+          
+          // 适配目的字段
+          purpose: item.purpose,
+          
+          // 适配拒绝原因 (优先使用 rejectReason，没有则尝试 cancelReason)
+          rejectionReason: item.rejectReason || item.cancelReason,
+          
+          // 格式化创建时间 createTime -> createdAt
+          createdAt: this.formatDateTime(item.createTime || item.createdAt)
+        };
+      });
 
       this.setData({
         reservations: [...this.data.reservations, ...formattedList],

@@ -41,6 +41,18 @@ function getUserReservations(userId) {
 }
 
 /**
+ * 查询当前用户的预约列表（我的预约）
+ * @param {Object} params 查询参数
+ * @param {number} params.page 页码
+ * @param {number} params.pageSize 每页数量
+ * @param {string} params.status 状态筛选（可选）
+ * @returns {Promise}
+ */
+function getMyReservations(params) {
+  return request.get('/reservation/my', params);
+}
+
+/**
  * 查询某实验室的预约列表
  * @param {number} labId 实验室ID
  * @returns {Promise}
@@ -142,6 +154,7 @@ module.exports = {
   getReservationDetail,
   getAllReservations,
   getUserReservations,
+  getMyReservations,
   getLabReservations,
   getReservationsByStatus,
   getPendingReservations,

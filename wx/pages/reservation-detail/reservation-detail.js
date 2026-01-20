@@ -35,12 +35,62 @@ Page({
       const response = await api.reservation.getReservationDetail(this.data.reservationId);
       const res = response.data; // 提取实际数据
       
-      // 格式化日期时间
+      // 状态码转换映射
+      const statusEnumMap = {
+        0: 'PENDING',
+        1: 'APPROVED',
+        2: 'REJECTED',
+        3: 'CANCELLED',
+        4: 'COMPLETED'
+      };
+
+      // 解析时间段字符串 "08:00-10:00"
+      let startTime = '';
+      let endTime = '';
+      if (res.timeSlot && typeof res.timeSlot === 'string' && res.timeSlot.includes('-')) {
+        [startTime, endTime] = res.timeSlot.split('-');
+      }
+
+      // 格式化数据以匹配视图层字段
       const reservation = {
         ...res,
-        createdAt: this.formatDateTime(res.createdAt),
-        updatedAt: this.formatDateTime(res.updatedAt),
-        reservationDate: this.formatDate(res.reservationDate)
+        id: res.id,
+        // 转换状态码
+        status: statusEnumMap[res.status] || 'PENDING',
+        
+        // 适配 laboratory 对象结构
+        laboratory: {
+          id: res.labId,
+          name: res.labName || '',
+          location: res.labLocation || '', // API可能需要确认是否返回location，如无则为空
+          capacity: res.labCapacity || 0,  // API可能未直接返回capacity，需要确认
+          images: res.labImage ? [res.labImage] : [] // 如果有图片
+        },
+        
+        // 适配日期字段名 reserveDate -> reservationDate
+        reservationDate: this.formatDate(res.reserveDate || res.reservationDate),
+        
+        // 适配时间段对象结构
+        timeslot: {
+          startTime: startTime,
+          endTime: endTime
+        },
+        
+        // 适配人数字段 peopleNum -> numberOfPeople
+        numberOfPeople: res.peopleNum || res.numberOfPeople,
+        
+        // 适配目的字段
+        purpose: res.purpose,
+        
+        // 适配拒绝原因
+        rejectionReason: res.rejectReason || res.cancelReason,
+        
+        // 适配备注字段 (API返回字段确认)
+        notes: res.comment, // 假设 comment 对应 备注/实验评价
+
+        // 格式化日期时间
+        createdAt: this.formatDateTime(res.createTime || res.createdAt),
+        updatedAt: this.formatDateTime(res.updateTime || res.updatedAt)
       };
 
       this.setData({ reservation });

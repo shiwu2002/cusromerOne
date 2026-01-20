@@ -63,14 +63,15 @@
         <text>预约人数</text>
       </view>
       <view class="number-input">
-        <button class="number-btn" bindtap="decreaseNumber">-</button>
+        <view class="number-btn" bindtap="decreaseNumber" hover-class="number-btn-hover">-</view>
         <input 
           type="number" 
           value="{{numberOfPeople}}" 
           class="number-value"
           bindinput="onNumberInput"
+          bindblur="onNumberBlur"
         />
-        <button class="number-btn" bindtap="increaseNumber">+</button>
+        <view class="number-btn" bindtap="increaseNumber" hover-class="number-btn-hover">+</view>
       </view>
       <view class="form-tip">最多可预约 {{laboratory.capacity}} 人</view>
     </view>
