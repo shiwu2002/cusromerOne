@@ -9,6 +9,12 @@
     <view class="time-info">{{formatTime(messageDetail.createdAt)}}</view>
   </view>
 
+  <!-- 发送者信息 -->
+  <view class="sender-info" wx:if="{{messageDetail.senderName}}">
+    <text class="sender-label">发件人：</text>
+    <text class="sender-name">{{messageDetail.senderName}}</text>
+  </view>
+
   <!-- 消息标题 -->
   <view class="message-title">{{messageDetail.title}}</view>
 
@@ -62,7 +68,7 @@
     </view>
   </view>
 
-  <!-- 附加信息 */
+  <!-- 附加信息 -->
   <view class="additional-info" wx:if="{{messageDetail.additionalInfo}}">
     <view class="info-title">附加信息</view>
     <view class="info-content">

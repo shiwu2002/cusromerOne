@@ -3,7 +3,7 @@
   <!-- 头部信息卡片 -->
   <view class="header-card">
     <view class="avatar-section" bindtap="changeAvatar">
-      <image class="avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+      <image class="avatar" src="{{userInfo.avatar || userInfo.avatarUrl || '/images/wode.png'}}" mode="aspectFill"></image>
       <view class="camera-icon">
         <text class="iconfont icon-camera"></text>
       </view>

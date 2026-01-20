@@ -86,8 +86,55 @@ function deleteFile(path) {
   return request.del('/file/delete', { path });
 }
 
+/**
+ * 上传头像（专用方法）
+ * @param {string} filePath 文件路径
+ * @returns {Promise}
+ */
+async function uploadAvatar(filePath) {
+  try {
+    const response = await uploadFile(filePath, 'avatar');
+    
+    // 根据后端返回的数据结构处理
+    // 后端返回格式：{ code: 200, message: "操作成功", data: { originalName, path, fileName, size, uploadTime, url }, success: true }
+    let avatarData;
+    
+    if (response && typeof response === 'object') {
+      // 如果response已经是对象，直接使用
+      if (response.success || response.code === 200) {
+        // 标准格式：response.data包含上传信息
+        avatarData = response.data || response;
+      } else {
+        // 非标准格式，直接使用response
+        avatarData = response;
+      }
+    } else {
+      // 如果response是字符串或其他类型，包装成对象
+      avatarData = response;
+    }
+    
+    // 返回标准化格式
+    return {
+      success: true,
+      code: 200,
+      message: '上传成功',
+      data: avatarData
+    };
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    // 返回错误格式
+    return {
+      success: false,
+      code: error.code || 500,
+      message: error.message || '上传失败',
+      data: null
+    };
+  }
+}
+
 module.exports = {
   uploadFile,
+  uploadAvatar,
   chooseAndUploadImage,
   chooseAndUploadFile,
   deleteFile

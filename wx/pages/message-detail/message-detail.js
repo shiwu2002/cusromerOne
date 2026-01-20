@@ -40,15 +40,32 @@ Page({
     wx.showLoading({ title: '加载中...' });
 
     try {
-      const response = await api.message.getMessageById(this.data.messageId);
+      const response = await api.message.getMessageDetail(this.data.messageId);
       const res = response.data; // 提取实际数据
+      
+      // 映射API返回的字段到页面使用的字段
+      const messageDetail = {
+        id: res.id,
+        title: res.title,
+        content: res.content,
+        type: res.messageType, // API返回的是messageType，页面使用的是type
+        createdAt: res.createTime, // API返回的是createTime，页面使用的是createdAt
+        reservationId: res.relatedId, // API返回的是relatedId，页面使用的是reservationId
+        senderName: res.senderName,
+        isRead: res.isRead,
+        priority: res.priority,
+        receiverName: res.receiverName,
+        readTime: res.readTime,
+        deleted: res.deleted
+      };
+      
       this.setData({
-        messageDetail: res
+        messageDetail: messageDetail
       });
 
       // 如果消息关联了预约，加载预约详情
-      if (res.reservationId) {
-        await this.loadReservationDetail(res.reservationId);
+      if (messageDetail.reservationId) {
+        await this.loadReservationDetail(messageDetail.reservationId);
       }
 
       // 根据消息类型设置操作按钮
@@ -238,7 +255,8 @@ Page({
       'RESERVATION_REJECTED': '❌',
       'RESERVATION_CANCELLED': '🚫',
       'RESERVATION_COMPLETED': '✔️',
-      'SYSTEM': '🔔'
+      'SYSTEM': '🔔',
+      'system': '🔔' // 添加小写版本，兼容API返回
     };
     return iconMap[type] || '📬';
   },
@@ -253,7 +271,8 @@ Page({
       'RESERVATION_REJECTED': '预约拒绝',
       'RESERVATION_CANCELLED': '预约取消',
       'RESERVATION_COMPLETED': '预约完成',
-      'SYSTEM': '系统通知'
+      'SYSTEM': '系统通知',
+      'system': '系统通知' // 添加小写版本，兼容API返回
     };
     return textMap[type] || '通知';
   },

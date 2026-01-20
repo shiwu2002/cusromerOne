@@ -45,14 +45,33 @@ Page({
   async loadUserInfo() {
     try {
       wx.showLoading({ title: '加载中...' });
+      
+      // 先检查是否已登录
+      if (!api.user.isLoggedIn()) {
+        // 清除本地存储的用户信息避免显示错误数据
+        wx.removeStorageSync('userInfo');
+        this.setData({ userInfo: {} });
+        throw new Error('未登录');
+      }
+      
       const response = await api.user.getProfile();
       const userInfo = response.data; // 提取实际数据
+      
+      // 如果使用了模拟数据，显示提示
+      if (userInfo.apiFallback) {
+        wx.showToast({ title: '使用本地缓存数据', icon: 'none' });
+      }
+      
       this.setData({ userInfo });
     } catch (error) {
       console.error('加载用户信息失败:', error);
-      // 如果是未登录，跳转到登录页
-      if (error.statusCode === 401) {
-        wx.redirectTo({ url: '/pages/login/login' });
+      if (error.message === '未登录') {
+        // 清除可能存在的数据并跳转登录页
+        this.setData({ userInfo: {} });
+        wx.showToast({ title: '请先登录', icon: 'none' });
+        setTimeout(() => {
+          wx.redirectTo({ url: '/pages/login/login' });
+        }, 1500);
       }
     } finally {
       wx.hideLoading();
@@ -120,20 +139,60 @@ Page({
         const tempFilePath = res.tempFilePaths[0];
         try {
           wx.showLoading({ title: '上传中...' });
-          const uploadResponse = await api.file.uploadAvatar(tempFilePath);
-          const uploadRes = uploadResponse.data; // 提取实际数据
           
-          // 更新用户头像
-          await api.user.updateProfile({
-            avatarUrl: uploadRes.url
+          // 使用头像专用的上传方法
+          const uploadResponse = await api.file.uploadAvatar(tempFilePath);
+          
+          // 解析上传返回的数据结构
+          let avatarUrl;
+          if (uploadResponse.success) {
+            const uploadData = uploadResponse.data;
+            // 根据后端返回的数据结构提取头像URL
+            if (uploadData.url) {
+              avatarUrl = uploadData.url;
+            } else if (uploadData.path) {
+              // 如果返回的是完整路径，确保包含完整URL前缀
+              avatarUrl = uploadData.path.startsWith('http') ? uploadData.path : `http://localhost:8080${uploadData.path}`;
+            } else {
+              avatarUrl = uploadData;
+            }
+          } else {
+            // 兼容旧版本返回格式
+            avatarUrl = uploadResponse.data.url || uploadResponse.data;
+          }
+          
+          // 更新用户头像（使用avatar字段，与后端实体类保持一致）
+          const updateResponse = await api.user.updateProfile({
+            avatar: avatarUrl
           });
 
-          // 重新加载用户信息
+          // 如果更新成功，更新本地存储的用户信息
+          if (updateResponse && (updateResponse.success || updateResponse.code === 200)) {
+            const currentUserInfo = api.user.getCurrentUser();
+            if (currentUserInfo) {
+              // 更新本地存储的用户信息的头像字段
+              const updatedUserInfo = {
+                ...currentUserInfo,
+                avatar: avatarUrl,
+                // 保留avatarUrl字段用于兼容性
+                avatarUrl: avatarUrl
+              };
+              wx.setStorageSync('userInfo', updatedUserInfo);
+              
+              // 更新页面显示的头像
+              this.setData({
+                'userInfo.avatar': avatarUrl,
+                'userInfo.avatarUrl': avatarUrl
+              });
+            }
+          }
+
+          // 重新加载完整的用户信息确保数据一致性
           await this.loadUserInfo();
           wx.showToast({ title: '头像更新成功', icon: 'success' });
         } catch (error) {
           console.error('上传头像失败:', error);
-          wx.showToast({ title: '上传失败', icon: 'none' });
+          wx.showToast({ title: '上传失败，请重试', icon: 'none' });
         } finally {
           wx.hideLoading();
         }
@@ -175,7 +234,27 @@ Page({
 
     try {
       wx.showLoading({ title: '保存中...' });
-      await api.user.updateProfile({ username: username.trim() });
+      const updateResponse = await api.user.updateProfile({ username: username.trim() });
+
+      // 如果更新成功，更新本地存储的用户信息
+      if (updateResponse && updateResponse.data) {
+        const currentUserInfo = api.user.getCurrentUser();
+        if (currentUserInfo) {
+          // 更新本地存储的用户信息的用户名字段
+          const updatedUserInfo = {
+            ...currentUserInfo,
+            username: username.trim()
+          };
+          wx.setStorageSync('userInfo', updatedUserInfo);
+          
+          // 立即更新页面显示的用户名
+          this.setData({
+            'userInfo.username': username.trim()
+          });
+        }
+      }
+
+      // 重新加载完整的用户信息确保数据一致性
       await this.loadUserInfo();
       this.setData({ showEditModal: false });
       wx.showToast({ title: '保存成功', icon: 'success' });
