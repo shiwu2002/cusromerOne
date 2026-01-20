@@ -274,8 +274,9 @@ Page({
    * 导航到预约页面
    */
   navigateToReservation() {
+    // 改为跳转到实验室选择页面，让用户先选择实验室
     wx.navigateTo({
-      url: '/pages/reservation/reservation'
+      url: '/pages/lab-selection/lab-selection'
     })
   },
 

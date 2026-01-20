@@ -1,0 +1,274 @@
+/* pages/lab-selection/lab-selection.wxss */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: #f7f7f7;
+  border-radius: 16rpx;
+  padding: 0 20rpx;
+  height: 64rpx;
+}
+
+.search-icon {
+  color: #999;
+  font-size: 28rpx;
+  margin-right: 10rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 100%;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.clear-icon {
+  color: #ccc;
+  font-size: 32rpx;
+  margin-left: 10rpx;
+  padding: 4rpx;
+}
+
+.filter-btn {
+  margin-left: 20rpx;
+  padding: 12rpx 24rpx;
+  background-color: #007aff;
+  border-radius: 32rpx;
+  color: #fff;
+  font-size: 24rpx;
+}
+
+/* 筛选面板 */
+.filter-panel {
+  background-color: #fff;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.filter-title {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.filter-options {
+  display: flex;
+  gap: 20rpx;
+}
+
+.filter-option {
+  padding: 12rpx 24rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.filter-option.active {
+  border-color: #007aff;
+  background-color: #e6f3ff;
+  color: #007aff;
+}
+
+/* 实验室列表 */
+.lab-list {
+  flex: 1;
+}
+
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.loading-spinner {
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid #f3f3f3;
+  border-top: 4rpx solid #007aff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 实验室卡片 */
+.lab-card {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  margin: 20rpx 30rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.lab-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.lab-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.lab-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.lab-status {
+  display: flex;
+  align-items: center;
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  margin-right: 8rpx;
+}
+
+.status-available .status-dot {
+  background-color: #52c41a;
+}
+
+.status-unavailable .status-dot {
+  background-color: #faad14;
+}
+
+.status-text {
+  color: #666;
+}
+
+.lab-location {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.lab-meta {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.lab-capacity,
+.lab-type {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.lab-description {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.select-btn {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  padding: 12rpx 24rpx;
+  background-color: #007aff;
+  border-radius: 32rpx;
+  color: #fff;
+  font-size: 24rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.empty-subtext {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 底部按钮 */
+.footer {
+  background-color: #fff;
+  padding: 20rpx 30rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.cancel-btn {
+  width: 100%;
+  height: 80rpx;
+  background-color: #f5f5f5;
+  color: #666;
+  border-radius: 40rpx;
+  border: none;
+  font-size: 32rpx;
+}
+
+.cancel-btn:active {
+  background-color: #e8e8e8;
+}

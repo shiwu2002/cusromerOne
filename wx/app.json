@@ -4,6 +4,7 @@
     "pages/login/login",
     "pages/register/register",
     "pages/forgot-password/forgot-password",
+    "pages/lab-selection/lab-selection",
     "pages/laboratory-list/laboratory-list",
     "pages/laboratory-detail/laboratory-detail",
     "pages/reservation/reservation",

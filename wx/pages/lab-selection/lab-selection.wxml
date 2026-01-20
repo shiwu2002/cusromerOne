@@ -1,0 +1,99 @@
+<!--pages/lab-selection/lab-selection.wxml-->
+<view class="container">
+  <!-- 顶部搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrapper">
+      <text class="search-icon">🔍</text>
+      <input 
+        class="search-input" 
+        placeholder="搜索实验室名称" 
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+        bindconfirm="onSearch"
+      />
+      <text class="clear-icon" wx:if="{{keyword}}" bindtap="onClearSearch">×</text>
+    </view>
+    <view class="filter-btn" bindtap="toggleFilter">
+      <text class="filter-icon">筛选</text>
+    </view>
+  </view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel" wx:if="{{filterVisible}}">
+    <view class="filter-title">状态筛选</view>
+    <view class="filter-options">
+      <view 
+        class="filter-option {{statusFilter === null ? 'active' : ''}}" 
+        bindtap="resetFilter"
+        data-status="{{null}}"
+      >
+        <text>全部</text>
+      </view>
+      <view 
+        class="filter-option {{statusFilter === 1 ? 'active' : ''}}" 
+        bindtap="selectStatus"
+        data-status="1"
+      >
+        <text>可用</text>
+      </view>
+      <view 
+        class="filter-option {{statusFilter === 0 ? 'active' : ''}}" 
+        bindtap="selectStatus"
+        data-status="0"
+      >
+        <text>维护中</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 实验室列表 -->
+  <scroll-view class="lab-list" scroll-y="{{true}}" bindscrolltolower="loadMore">
+    <!-- 加载指示器 -->
+    <view class="loading-wrapper" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 实验室卡片 -->
+    <view 
+      class="lab-card" 
+      wx:for="{{laboratories}}" 
+      wx:key="id"
+      bindtap="selectLaboratory"
+      data-laboratory="{{item}}"
+    >
+      <image src="{{item.imageUrl}}" mode="aspectFill" class="lab-image" lazy-load="{{true}}"></image>
+      <view class="lab-info">
+        <view class="lab-header">
+          <text class="lab-name">{{item.labName}}</text>
+          <view class="lab-status status-{{item.status === 1 ? 'available' : 'unavailable'}}">
+            <text class="status-dot"></text>
+            <text class="status-text">{{item.status === 1 ? '可用' : '维护中'}}</text>
+          </view>
+        </view>
+        <text class="lab-location">📍 {{item.location}}</text>
+        <view class="lab-meta">
+          <text class="lab-capacity">👥 {{item.capacity}}人</text>
+          <text class="lab-type">🔬 {{item.labType}}</text>
+        </view>
+        <text class="lab-description">{{item.description}}</text>
+      </view>
+      <view class="select-btn">
+        <text class="select-text">选择预约</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && laboratories.length === 0}}">
+      <text class="empty-icon">🔬</text>
+      <text class="empty-text">暂无可用实验室</text>
+      <text class="empty-subtext">请调整筛选条件或稍后重试</text>
+    </view>
+  </scroll-view>
+
+  <!-- 底部取消按钮 -->
+  <view class="footer">
+    <button class="cancel-btn" bindtap="onCancel">取消</button>
+  </view>
+</view>
