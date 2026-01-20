@@ -21,7 +21,7 @@ function sendMessage(receiverId, title, content) {
  * @returns {Promise}
  */
 function getAllMessages() {
-  return request.get('/messages/list');
+  return request.get('/messages');
 }
 
 /**
@@ -41,12 +41,17 @@ function getUnreadCount() {
 }
 
 /**
- * 按类型获取消息
+ * 按类型获取消息（支持分页）
  * @param {string} messageType 消息类型
+ * @param {number} page 页码
+ * @param {number} pageSize 每页数量
  * @returns {Promise}
  */
-function getMessagesByType(messageType) {
-  return request.get(`/messages/list/type/${messageType}`);
+function getMessagesByType(messageType, page = 1, pageSize = 20) {
+  return request.get(`/messages/list/type/${messageType}`, {
+    page,
+    pageSize
+  });
 }
 
 /**
@@ -123,7 +128,7 @@ function getSentMessages() {
 }
 
 /**
- * 分页获取消息
+ * 分页获取消息（主要接口）
  * @param {number} page 页码
  * @param {number} pageSize 每页数量
  * @returns {Promise}
@@ -132,6 +137,36 @@ function getMessagesByPage(page = 1, pageSize = 20) {
   return request.get('/messages/page', {
     page,
     pageSize
+  });
+}
+
+/**
+ * 根据优先级获取消息
+ * @param {number} priority 优先级 (0-低, 1-中, 2-高)
+ * @returns {Promise}
+ */
+function getMessagesByPriority(priority) {
+  return request.get(`/messages/priority/${priority}`);
+}
+
+/**
+ * 获取高优先级未读消息
+ * @returns {Promise}
+ */
+function getHighPriorityUnreadMessages() {
+  return request.get('/messages/high-priority-unread');
+}
+
+/**
+ * 获取消息列表（适配兼容性接口）
+ * @param {number} page 页码
+ * @param {number} pageSize 每页数量
+ * @returns {Promise}
+ */
+function getMessages(params = {}) {
+  return request.get('/messages', {
+    page: params.page || 1,
+    pageSize: params.pageSize || 20
   });
 }
 
@@ -149,5 +184,8 @@ module.exports = {
   deleteMessage,
   batchDeleteMessages,
   getSentMessages,
-  getMessagesByPage
+  getMessagesByPage,
+  getMessages,
+  getMessagesByPriority,
+  getHighPriorityUnreadMessages
 };

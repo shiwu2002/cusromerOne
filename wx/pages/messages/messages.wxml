@@ -9,21 +9,45 @@
     <button class="mark-all-btn" bindtap="markAllAsRead" size="mini">全部标记已读</button>
   </view>
 
+  <!-- 分类标签导航 -->
+  <view class="category-tabs">
+    <scroll-view class="tab-scroll" scroll-x="true" scroll-with-animation="true">
+      <view 
+        class="tab-item {{item.active ? 'active' : ''}}" 
+        wx:for="{{categories}}" 
+        wx:key="type"
+        bindtap="switchCategory"
+        data-type="{{item.type}}"
+      >
+        <text class="tab-icon">{{item.icon}}</text>
+        <text class="tab-name">{{item.name}}</text>
+        <text class="tab-count" wx:if="{{item.count > 0}}">{{item.count}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- 消息列表 -->
-  <view class="message-list" wx:if="{{messageList.length > 0}}">
+  <view class="message-list" wx:if="{{filteredMessageList.length > 0}}">
     <view 
-      class="message-item {{item.isRead ? 'read' : 'unread'}}" 
-      wx:for="{{messageList}}" 
+      class="message-item {{item.isRead ? 'read' : 'unread'}} priority-{{getPriorityClass(item.priority)}}" 
+      wx:for="{{filteredMessageList}}" 
       wx:key="id"
       bindtap="goToDetail"
       data-id="{{item.id}}"
     >
       <view class="message-header">
-        <view class="message-type-badge type-{{item.type}}">
-          <text class="type-icon">{{getTypeIcon(item.type)}}</text>
-          <text class="type-text">{{getTypeText(item.type)}}</text>
+        <view class="message-info-left">
+          <view class="message-type-badge type-{{item.messageType}}">
+            <text class="type-icon">{{getTypeIcon(item.messageType)}}</text>
+            <text class="type-text">{{getTypeText(item.messageType)}}</text>
+          </view>
+          <!-- 优先级指示器 -->
+          <text class="priority-indicator" wx:if="{{item.priority > 0}}">{{getPriorityIcon(item.priority)}}</text>
         </view>
-        <view class="message-time">{{formatTime(item.createdAt)}}</view>
+        <view class="message-info-right">
+          <view class="message-time">{{formatTime(item.createTime)}}</view>
+          <text class="sender-info" wx:if="{{item.senderName}}">{{item.senderName}}</text>
+        </view>
       </view>
 
       <view class="message-title">
@@ -33,18 +57,20 @@
 
       <view class="message-content">{{item.content}}</view>
 
-      <!-- 预约相关信息 -->
-      <view class="related-info" wx:if="{{item.reservationId}}">
-        <text class="info-icon">🔗</text>
-        <text class="info-text">预约编号：{{item.reservationNumber || item.reservationId}}</text>
+      <!-- 关联预约信息 -->
+      <view class="related-info" wx:if="{{item.relatedType === 'reservation' && item.relatedId}}">
+        <text class="info-icon">📅</text>
+        <text class="info-text">预约编号：{{item.relatedId}}</text>
       </view>
     </view>
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{messageList.length === 0 && !loading}}">
-    <image class="empty-icon" src="/images/empty-message.png" mode="aspectFit"></image>
-    <text class="empty-text">暂无消息</text>
+  <view class="empty-state" wx:if="{{filteredMessageList.length === 0 && !loading}}">
+    <view class="empty-icon">💌</view>
+    <text class="empty-text" wx:if="{{activeCategory === 'all'}}">暂无消息</text>
+    <text class="empty-text" wx:elif="{{activeCategory !== 'all' && hasEmptyCategory}}">该分类暂无消息</text>
+    <text class="empty-text" wx:else>暂无符合条件的消息</text>
   </view>
 
   <!-- 加载状态 -->
