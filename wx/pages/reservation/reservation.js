@@ -351,19 +351,32 @@ Page({
       // remark: 备注
       
       const reservationData = {
-        userId: userInfo.userId, 
-        labId: parseInt(this.data.labId), // 修正回 labId
-        reserveDate: this.data.reservationDate, // 修正回 reserveDate
-        timeSlot: timeSlotStr, // 修正回 timeSlot (传字符串 HH:mm-HH:mm)
+        userId: userInfo.userId,
+        // 修正字段名：userInfo中存储的是username(小写)，同时兼容realName
+        userName: userInfo.username || userInfo.realName || userInfo.nickName,
+        labId: parseInt(this.data.labId),
+        labName: this.data.laboratory.name, // 保留标准字段
+        reserveDate: this.data.reservationDate,
+        timeSlot: timeSlotStr,
         purpose: this.data.purpose,
         peopleNum: this.data.numberOfPeople,
-        remark: this.data.notes || ''
+        // 根据反馈调整字段映射：
+        // experimentName 存放 实验室名称
+        experimentName: this.data.laboratory.name,
+        // equipment 存放 备注信息
+        equipment: this.data.notes || '',
+        remark: this.data.notes || '' // 保留标准备注字段
       };
 
       // 如果有文档，将文档链接追加到备注中（临时方案，直至 API 支持文档字段）
       if (this.data.documents.length > 0) {
          const docLinks = this.data.documents.map(d => `[文档: ${d.name}](${d.url})`).join('\n');
-         reservationData.remark = (reservationData.remark ? reservationData.remark + '\n' : '') + docLinks;
+         const appendText = '\n' + docLinks;
+         
+         // 追加到 equipment (备注信息)
+         reservationData.equipment = (reservationData.equipment || '') + appendText;
+         // 追加到 remark
+         reservationData.remark = (reservationData.remark || '') + appendText;
       }
       
       await api.reservation.createReservation(reservationData);

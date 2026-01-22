@@ -3,10 +3,10 @@
   <!-- 消息头部 -->
   <view class="message-header">
     <view class="type-badge type-{{messageDetail.type}}">
-      <text class="type-icon">{{getTypeIcon(messageDetail.type)}}</text>
-      <text class="type-text">{{getTypeText(messageDetail.type)}}</text>
+      <text class="type-icon">{{messageDetail.typeIcon}}</text>
+      <text class="type-text">{{messageDetail.typeText}}</text>
     </view>
-    <view class="time-info">{{formatTime(messageDetail.createdAt)}}</view>
+    <view class="time-info">{{messageDetail.formattedTime}}</view>
   </view>
 
   <!-- 发送者信息 -->
@@ -48,7 +48,7 @@
       </view>
       <view class="info-row" wx:if="{{reservationDetail.status}}">
         <text class="label">状态：</text>
-        <text class="value status-{{reservationDetail.status}}">{{getStatusText(reservationDetail.status)}}</text>
+        <text class="value status-{{reservationDetail.status}}">{{reservationDetail.statusText}}</text>
       </view>
     </view>
     <view class="view-detail-btn" bindtap="goToReservation">

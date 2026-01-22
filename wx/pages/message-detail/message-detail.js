@@ -56,7 +56,11 @@ Page({
         priority: res.priority,
         receiverName: res.receiverName,
         readTime: res.readTime,
-        deleted: res.deleted
+        deleted: res.deleted,
+        // 预处理显示字段
+        typeIcon: this.getTypeIcon(res.messageType),
+        typeText: this.getTypeText(res.messageType),
+        formattedTime: this.formatTime(res.createTime)
       };
       
       this.setData({
@@ -90,6 +94,10 @@ Page({
     try {
       const response = await api.reservation.getReservationById(reservationId);
       const res = response.data; // 提取实际数据
+      
+      // 预处理显示字段
+      res.statusText = this.getStatusText(res.status);
+      
       this.setData({
         reservationDetail: res
       });
