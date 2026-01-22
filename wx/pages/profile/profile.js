@@ -116,14 +116,14 @@ Page({
     try {
       const response = await api.message.getUnreadCount();
       const count = response.data || 0;
-      if (count > 0) {
-        wx.setTabBarBadge({
-          index: 2,
-          text: count > 99 ? '99+' : String(count)
-        });
-      } else {
-        wx.removeTabBarBadge({ index: 2 });
-      }
+        if (count > 0) {
+          wx.setTabBarBadge({
+            index: 3,
+            text: count > 99 ? '99+' : String(count)
+          });
+        } else {
+          wx.removeTabBarBadge({ index: 3 });
+        }
     } catch (error) {
       console.error('更新徽标失败:', error);
     }
@@ -386,7 +386,7 @@ Page({
           // 清除本地存储的token
           wx.removeStorageSync('token');
           // 清除tabBar徽标
-          wx.removeTabBarBadge({ index: 2 });
+          wx.removeTabBarBadge({ index: 3 });
           // 跳转到登录页
           wx.reLaunch({ url: '/pages/login/login' });
         }
