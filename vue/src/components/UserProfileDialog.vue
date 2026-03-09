@@ -68,17 +68,13 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getUserById, updateUser } from '@/api/user'
+import { getCurrentUser, updateUser } from '@/api/user'
 import { useUserStore } from '@/store'
 
 const props = defineProps({
   visible: {
     type: Boolean,
     default: false
-  },
-  userId: {
-    type: Number,
-    required: true
   }
 })
 
@@ -142,9 +138,11 @@ const formatDate = (dateString) => {
 const loadUserInfo = async () => {
   try {
     loading.value = true
-    const res = await getUserById(props.userId)
+    const res = await getCurrentUser()
     if (res.data) {
       Object.assign(userForm, res.data)
+      // 更新 store 中的用户信息
+      userStore.updateUserInfo(res.data)
     } else {
       ElMessage.error('获取用户信息失败')
     }
@@ -171,8 +169,7 @@ const handleSave = async () => {
     
     loading.value = true
     // 更新用户信息，传递整个用户对象
-    const userId = props.userId
-    await updateUser(userId, userForm)
+    await updateUser(userForm.id, userForm)
     
     ElMessage.success('用户信息更新成功')
     

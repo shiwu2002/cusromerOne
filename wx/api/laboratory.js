@@ -69,6 +69,14 @@ function getLaboratoriesByCapacity(minCapacity, maxCapacity) {
   return request.get('/laboratory/capacity', params);
 }
 
+/**
+ * 获取实验室统计信息
+ * @returns {Promise}
+ */
+function getStatistics() {
+  return request.get('/laboratory/statistics');
+}
+
 module.exports = {
   getLaboratoryDetail,
   getAllLaboratories,
@@ -76,5 +84,6 @@ module.exports = {
   getLaboratoriesByType,
   getLaboratoriesByStatus,
   searchLaboratories,
-  getLaboratoriesByCapacity
+  getLaboratoriesByCapacity,
+  getStatistics
 };

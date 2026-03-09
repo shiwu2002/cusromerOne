@@ -7,6 +7,7 @@ const reservationApi = require('./reservation.js');
 const messageApi = require('./message.js');
 const fileApi = require('./file.js');
 const wechatApi = require('./wechat.js');
+const creditApi = require('./credit.js');
 
 module.exports = {
   // 用户相关
@@ -31,5 +32,8 @@ module.exports = {
   file: fileApi,
   
   // 微信登录相关
-  wechat: wechatApi
+  wechat: wechatApi,
+  
+  // 信誉分系统
+  credit: creditApi
 };

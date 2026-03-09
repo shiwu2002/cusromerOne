@@ -22,8 +22,8 @@ const routes = [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '工作台', icon: 'DataLine' }
+        component: () => import('@/views/DashboardNew.vue'),
+        meta: { title: '数据大屏', icon: 'DataLine' }
       },
       {
         path: 'users',
@@ -66,6 +66,12 @@ const routes = [
         name: 'ReportManagement',
         component: () => import('@/views/ReportManagement.vue'),
         meta: { title: '报表导出', icon: 'Document' }
+      },
+      {
+        path: 'credits',
+        name: 'CreditManagement',
+        component: () => import('@/views/CreditManagement.vue'),
+        meta: { title: '信誉分管理', icon: 'Star' }
       }
     ]
   }

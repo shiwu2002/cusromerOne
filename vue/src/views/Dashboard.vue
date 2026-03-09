@@ -1,10 +1,11 @@
 <template>
   <div class="dashboard-container">
+    <!-- 统计卡片行 -->
     <el-row :gutter="20" class="statistics-row">
       <el-col :xs="24" :sm="12" :md="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card gradient-purple">
           <div class="stat-content">
-            <div class="stat-icon user-icon">
+            <div class="stat-icon">
               <el-icon><User /></el-icon>
             </div>
             <div class="stat-info">
@@ -16,9 +17,9 @@
       </el-col>
       
       <el-col :xs="24" :sm="12" :md="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card gradient-pink">
           <div class="stat-content">
-            <div class="stat-icon lab-icon">
+            <div class="stat-icon">
               <el-icon><OfficeBuilding /></el-icon>
             </div>
             <div class="stat-info">
@@ -30,9 +31,9 @@
       </el-col>
       
       <el-col :xs="24" :sm="12" :md="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card gradient-blue">
           <div class="stat-content">
-            <div class="stat-icon reservation-icon">
+            <div class="stat-icon">
               <el-icon><Calendar /></el-icon>
             </div>
             <div class="stat-info">
@@ -44,9 +45,9 @@
       </el-col>
       
       <el-col :xs="24" :sm="12" :md="6">
-        <el-card class="stat-card">
+        <el-card class="stat-card gradient-orange">
           <div class="stat-content">
-            <div class="stat-icon pending-icon">
+            <div class="stat-icon">
               <el-icon><Warning /></el-icon>
             </div>
             <div class="stat-info">
@@ -58,72 +59,24 @@
       </el-col>
     </el-row>
     
-    <el-row :gutter="20" class="charts-row">
-      <el-col :xs="24" :md="12">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>最近预约</span>
-              <el-link type="primary" @click="goToReservations">查看更多</el-link>
-            </div>
-          </template>
-          <el-table
-            :data="recentReservations"
-            style="width: 100%"
-            v-loading="loadingReservations"
-          >
-            <el-table-column prop="userName" label="用户" width="120" />
-            <el-table-column prop="labName" label="实验室" />
-            <el-table-column prop="reserveDate" label="预约日期" width="120" />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getReservationStatusType(row.status)" size="small">
-                  {{ getReservationStatusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-      
-      <el-col :xs="24" :md="12">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>实验室使用情况</span>
-            </div>
-          </template>
-          <el-table
-            :data="laboratoryStats"
-            style="width: 100%"
-            v-loading="loadingLabs"
-          >
-            <el-table-column prop="labName" label="实验室" />
-            <el-table-column prop="capacity" label="容量" width="80" align="center" />
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :type="getLabStatusType(row.status)" size="small">
-                  {{ getLabStatusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 可视化图表区域 -->
+    <div class="charts-section" v-loading="loading">
+      <DashboardCharts ref="chartsRef" />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, OfficeBuilding, Calendar, Warning } from '@element-plus/icons-vue'
-import { getReservationStatistics, getReservationList } from '@/api/reservation'
-import { getLaboratoryList, getLaboratoryStatistics } from '@/api/laboratory'
-import { getUserList } from '@/api/user'
+import { getDashboardData } from '@/api/dashboard'
+import DashboardCharts from '@/components/DashboardCharts.vue'
 
 const router = useRouter()
+const chartsRef = ref(null)
+const loading = ref(false)
 
 const statistics = ref({
   totalUsers: 0,
@@ -131,11 +84,6 @@ const statistics = ref({
   totalReservations: 0,
   pendingApprovals: 0
 })
-
-const recentReservations = ref([])
-const laboratoryStats = ref([])
-const loadingReservations = ref(false)
-const loadingLabs = ref(false)
 
 // 预约状态处理函数
 const getReservationStatusType = (status) => {
@@ -184,97 +132,36 @@ const getLabStatusText = (status) => {
 }
 
 const loadStatistics = async () => {
+  loading.value = true
   try {
     console.log('=== 开始加载统计数据 ===')
     
-    // 加载用户统计 - 通过获取用户列表来统计总数
-    try {
-      const userList = await getUserList()
-      console.log('用户列表数据:', userList)
-      if (Array.isArray(userList.data)) {
-        statistics.value.totalUsers = userList.data.length
-      } else {
-        statistics.value.totalUsers = 0
-      }
-    } catch (error) {
-      console.error('获取用户列表失败:', error)
-      statistics.value.totalUsers = 0
+    // 使用数据大屏专用接口一次性获取所有数据
+    const dashboardData = await getDashboardData()
+    const data = dashboardData.data
+    
+    if (data) {
+      // 核心指标
+      const metrics = data.coreMetrics || {}
+      statistics.value.totalUsers = metrics.totalUsers || 0
+      statistics.value.totalLaboratories = metrics.totalLaboratories || 0
+      statistics.value.totalReservations = metrics.totalReservations || 0
+      statistics.value.pendingApprovals = metrics.pendingApprovals || 0
     }
-    
-    // 加载预约统计
-    const reservationStats = await getReservationStatistics()
-    console.log('预约统计数据:', reservationStats)
-    statistics.value.totalReservations = reservationStats.data?.totalCount || 0
-    statistics.value.pendingApprovals = reservationStats.data?.pendingCount || 0
-    
-    // 加载实验室统计
-    const labStats = await getLaboratoryStatistics()
-    console.log('实验室统计数据:', labStats)
-    statistics.value.totalLaboratories = labStats.data?.totalCount || 0
     
     console.log('=== 统计数据加载完成 ===')
     console.log('最终统计值:', statistics.value)
   } catch (error) {
     console.error('加载统计数据失败:', error)
     ElMessage.error('加载统计数据失败')
+  } finally {
+    loading.value = false
   }
 }
 
-const loadRecentReservations = async () => {
-  loadingReservations.value = true
-  try {
-    const res = await getReservationList({
-      page: 1,
-      pageSize: 5,
-      sortBy: 'createdAt',
-      sortOrder: 'desc'
-    })
-    console.log('预约列表响应:', res)
-    
-    // 根据API文档，预约列表直接返回数组，不是分页对象
-    if (Array.isArray(res.data)) {
-      recentReservations.value = res.data.slice(0, 5)
-    } else if (res.data?.list) {
-      recentReservations.value = res.data.list
-    } else {
-      recentReservations.value = []
-    }
-    
-    console.log('最近预约数据:', recentReservations.value)
-  } catch (error) {
-    console.error('加载最近预约失败:', error)
-    ElMessage.error('加载最近预约失败')
-  } finally {
-    loadingReservations.value = false
-  }
-}
-
-const loadLaboratoryStats = async () => {
-  loadingLabs.value = true
-  try {
-    const res = await getLaboratoryList({
-      page: 1,
-      pageSize: 5
-    })
-    console.log('实验室列表响应:', res)
-    
-    // 根据API文档，实验室列表直接返回数组，不是分页对象
-    if (Array.isArray(res.data)) {
-      laboratoryStats.value = res.data.slice(0, 5)
-    } else if (res.data?.list) {
-      laboratoryStats.value = res.data.list
-    } else {
-      laboratoryStats.value = []
-    }
-    
-    console.log('实验室数据:', laboratoryStats.value)
-  } catch (error) {
-    console.error('加载实验室数据失败:', error)
-    ElMessage.error('加载实验室数据失败')
-  } finally {
-    loadingLabs.value = false
-  }
-}
+// 不再需要这些函数，数据直接从 dashboard 接口获取
+// const loadRecentReservations = async () => {}
+// const loadLaboratoryStats = async () => {}
 
 const goToReservations = () => {
   router.push('/reservations')
@@ -282,55 +169,82 @@ const goToReservations = () => {
 
 onMounted(() => {
   loadStatistics()
-  loadRecentReservations()
-  loadLaboratoryStats()
 })
 </script>
 
 <style scoped>
 .dashboard-container {
   padding: 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 80px);
 }
 
 .statistics-row {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-  margin-bottom: 20px;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 渐变背景 */
+.gradient-purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-pink {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
 .stat-content {
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 10px;
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 32px;
   color: white;
   margin-right: 20px;
-}
-
-.user-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.lab-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.reservation-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.pending-icon {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-info {
@@ -338,28 +252,36 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: bold;
-  color: #303133;
+  color: white;
   line-height: 1;
   margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
 }
 
-.charts-row {
-  margin-bottom: 20px;
+.charts-section {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* 卡片头部样式 */
+:deep(.el-card__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: none;
+  padding: 16px 20px;
+  font-weight: 600;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 10px;
@@ -375,5 +297,30 @@ onMounted(() => {
   .stat-value {
     font-size: 24px;
   }
+  
+  .charts-section {
+    padding: 10px;
+  }
 }
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
 </style>

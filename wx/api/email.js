@@ -26,10 +26,10 @@ function verifyEmail(token) {
 /**
  * 发送验证码邮件
  * @param {string} email 邮箱地址
- * @param {string} purpose 用途: register | reset-password | bind-email
+ * @param {string} purpose 用途：register | reset-password | bind-email
  * @returns {Promise}
  */
-function sendCode(email, purpose = 'verify') {
+function sendCode(email, purpose = 'reset-password') {
   return request.post('/user/send-code', {
     email,
     purpose

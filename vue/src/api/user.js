@@ -18,6 +18,14 @@ export const register = (data) => {
   })
 }
 
+// 获取当前用户信息（从 token 中获取）
+export const getCurrentUser = () => {
+  return request({
+    url: '/api/user',
+    method: 'get'
+  })
+}
+
 // 查询单个用户
 export const getUserById = (id) => {
   return request({

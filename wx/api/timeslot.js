@@ -38,7 +38,7 @@ function getTimeSlotDetail(id) {
 /**
  * 查询可用时间段
  * @param {number} labId 实验室ID
- * @param {string} date 日期 (格式: YYYY-MM-DD)
+ * @param {string} date 日期 (格式：YYYY-MM-DD)
  * @returns {Promise}
  */
 function getAvailableTimeslots(labId, date) {
@@ -48,10 +48,19 @@ function getAvailableTimeslots(labId, date) {
   });
 }
 
+/**
+ * 获取时间段统计信息
+ * @returns {Promise}
+ */
+function getStatistics() {
+  return request.get('/timeslot/statistics');
+}
+
 module.exports = {
   getAllTimeSlots,
   getEnabledTimeSlots,
   getTimeSlotsByStatus,
   getTimeSlotDetail,
-  getAvailableTimeslots
+  getAvailableTimeslots,
+  getStatistics
 };

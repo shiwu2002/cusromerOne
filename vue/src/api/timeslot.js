@@ -1,31 +1,24 @@
 import request from '@/utils/request'
 
-// 添加时间段
-export const addTimeslot = (data) => {
-  return request({
-    url: '/api/timeslot',
-    method: 'post',
-    data
-  })
-}
-
-// 查询单个时间段
-export const getTimeslotById = (id) => {
-  return request({
-    url: `/api/timeslot/${id}`,
-    method: 'get'
-  })
-}
-
-// 查询所有时间段
-export const getTimeslotList = () => {
+// 获取所有时间段列表
+export const getTimeslotList = (params) => {
   return request({
     url: '/api/timeslot/list',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
-// 查询启用的时间段
+// 获取可用时间段
+export const getAvailableTimeslots = (params) => {
+  return request({
+    url: '/api/timeslot/available',
+    method: 'get',
+    params
+  })
+}
+
+// 获取启用的时间段
 export const getEnabledTimeslots = () => {
   return request({
     url: '/api/timeslot/enabled',
@@ -33,11 +26,20 @@ export const getEnabledTimeslots = () => {
   })
 }
 
-// 按状态查询
+// 按状态查询时间段
 export const getTimeslotsByStatus = (status) => {
   return request({
     url: `/api/timeslot/status/${status}`,
     method: 'get'
+  })
+}
+
+// 添加时间段
+export const addTimeslot = (data) => {
+  return request({
+    url: '/api/timeslot',
+    method: 'post',
+    data
   })
 }
 
@@ -55,19 +57,7 @@ export const updateTimeslotStatus = (id, status) => {
   return request({
     url: '/api/timeslot/status',
     method: 'put',
-    params: {
-      id,
-      status
-    }
-  })
-}
-
-// 批量更新排序
-export const batchUpdateSort = (data) => {
-  return request({
-    url: '/api/timeslot/batch-sort',
-    method: 'put',
-    data
+    params: { id, status }
   })
 }
 
@@ -76,6 +66,15 @@ export const deleteTimeslot = (id) => {
   return request({
     url: `/api/timeslot/${id}`,
     method: 'delete'
+  })
+}
+
+// 批量更新排序
+export const batchUpdateSortOrder = (data) => {
+  return request({
+    url: '/api/timeslot/batch-sort',
+    method: 'put',
+    data
   })
 }
 

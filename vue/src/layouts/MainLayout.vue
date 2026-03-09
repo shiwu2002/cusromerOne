@@ -57,6 +57,11 @@
           <el-icon><Document /></el-icon>
           <template #title>报表导出</template>
         </el-menu-item>
+        
+        <el-menu-item index="/credits">
+          <el-icon><Star /></el-icon>
+          <template #title>信誉分管理</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -99,9 +104,7 @@
 
     <!-- 个人信息对话框 -->
     <UserProfileDialog
-      v-if="userStore.userId"
       v-model:visible="profileDialogVisible"
-      :userId="userStore.userId"
     />
 
     <!-- 修改密码对话框 -->
@@ -125,6 +128,7 @@ import {
   Clock,
   ChatDotRound,
   Document,
+  Star,
   Fold,
   Expand,
   ArrowDown
