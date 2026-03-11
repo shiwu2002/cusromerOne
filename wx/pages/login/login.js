@@ -94,7 +94,7 @@ Page({
     this.setData({ showRegisterPassword: !this.data.showRegisterPassword });
   },
 
-  // 步骤1：微信登录（wx.login → /api/wx/login）
+  // 步骤 1：微信登录（wx.login → /api/wx/login）
   async wechatLogin() {
     if (this.data.wxLoginLoading) return; // 防抖
     this.setData({ wxLoginLoading: true });
@@ -104,35 +104,37 @@ Page({
       if (!wxRes || !wxRes.code) {
         throw new Error('获取微信 code 失败');
       }
-
+  
       // 2) 后端换取 openid/sessionKey，并判断是否已绑定
       const response = await wechatApi.login(wxRes.code);
       const res = response.data;
-      // wechatApi.login 内部已在 needBind=false 且存在 token 时保存 token 与用户信息
-
+  
       if (res && res.needBind === false) {
         // 已绑定：登录成功，跳转首页
-        wx.showToast({ title: '登录成功', icon: 'success' });
+        wx.showToast({ title: '微信登录成功', icon: 'success' });
         setTimeout(() => {
           wx.switchTab({ url: '/pages/index/index' });
         }, 800);
         return;
       }
-
-      // 未绑定：保存 openid/unionid，展示账号登录/注册选项
+  
+      // 未绑定：保存 openid/unionid/sessionKey，展示账号登录/注册选项
       const openid = res && res.openid ? res.openid : '';
       const unionid = res && res.unionid ? res.unionid : '';
-
+      const sessionKey = res && res.sessionKey ? res.sessionKey : '';
+  
       this.setData({
         needBind: true,
         openid,
         unionid,
+        sessionKey,
         activeTab: 0
       });
-
+  
       // 同时保存到本地，便于登录/注册时传递
       wx.setStorageSync('wechat_openid', openid);
       wx.setStorageSync('wechat_unionid', unionid);
+      wx.setStorageSync('wechat_session_key', sessionKey);
     } catch (error) {
       console.error('微信登录失败:', error);
       wx.showToast({ title: error.message || '微信登录失败', icon: 'none' });
@@ -141,7 +143,7 @@ Page({
     }
   },
 
-  // 步骤2A：账号登录（携带 openid/unionid 自动绑定）
+  // 步骤 2A：账号登录（先登录获取 userId，再调用绑定接口）
   async userLogin() {
     if (this.data.loginLoading) return;
     const { username, password } = this.data.loginForm;
@@ -151,7 +153,7 @@ Page({
       return;
     }
     if (username.length < 2 || username.length > 20) {
-      wx.showToast({ title: '用户名长度为2-20个字符', icon: 'none' });
+      wx.showToast({ title: '用户名长度为 2-20 个字符', icon: 'none' });
       return;
     }
     if (!password) {
@@ -159,38 +161,48 @@ Page({
       return;
     }
     if (password.length < 6 || password.length > 20) {
-      wx.showToast({ title: '密码长度为6-20位', icon: 'none' });
+      wx.showToast({ title: '密码长度为 6-20 位', icon: 'none' });
       return;
     }
-
+  
     this.setData({ loginLoading: true });
     try {
       const openid = wx.getStorageSync('wechat_openid');
       const unionid = wx.getStorageSync('wechat_unionid');
-
-      // 登录时携带 openid/unionid，后端自动绑定（sessionKey 后端已保存）
-      const response = await userApi.login({
+      const sessionKey = wx.getStorageSync('wechat_session_key');
+  
+      // 1) 先调用普通登录接口获取 userId
+      const loginResponse = await userApi.login({
         username,
-        password,
-        openid,
-        unionid
+        password
       });
-      // 响应格式：{code: 200, message: "操作成功", data: {token, userId, username, userType, realName, wechatBound, bindWarning}, success: true}
-      const data = response.data;
-
-      // 清除临时存储的微信信息
-      wx.removeStorageSync('wechat_openid');
-      wx.removeStorageSync('wechat_unionid');
-
-      // 处理绑定结果提示
-      if (data.wechatBound) {
+      const loginData = loginResponse.data;
+  
+      // 2) 获取到 userId 后，调用绑定接口
+      if (openid && loginData && loginData.userId) {
+        const bindResponse = await wechatApi.bind({
+          userId: loginData.userId,
+          openid,
+          unionid,
+          sessionKey
+        });
+          
+        const bindData = bindResponse.data;
+          
+        // 绑定成功后，清除临时存储的微信信息
+        wx.removeStorageSync('wechat_openid');
+        wx.removeStorageSync('wechat_unionid');
+        wx.removeStorageSync('wechat_session_key');
+          
         wx.showToast({ title: '登录成功，微信已绑定', icon: 'success' });
-      } else if (data.bindWarning) {
-        wx.showToast({ title: data.bindWarning, icon: 'none' });
       } else {
+        // 如果没有 openid，只登录不绑定
+        wx.removeStorageSync('wechat_openid');
+        wx.removeStorageSync('wechat_unionid');
+        wx.removeStorageSync('wechat_session_key');
         wx.showToast({ title: '登录成功', icon: 'success' });
       }
-
+  
       // 跳转主页
       setTimeout(() => {
         wx.switchTab({ url: '/pages/index/index' });
@@ -203,18 +215,18 @@ Page({
     }
   },
 
-  // 步骤2B：注册新账号（携带 openid/unionid 自动绑定）
+  // 步骤 2B：注册新账号（先注册获取 userId，再调用绑定接口）
   async userRegister() {
     if (this.data.registerLoading) return;
     const { username, email, password } = this.data.registerForm;
-
+  
     // 简单校验
     if (!username) {
       wx.showToast({ title: '请输入用户名', icon: 'none' });
       return;
     }
     if (username.length < 2 || username.length > 20) {
-      wx.showToast({ title: '用户名长度为2-20个字符', icon: 'none' });
+      wx.showToast({ title: '用户名长度为 2-20 个字符', icon: 'none' });
       return;
     }
     if (!password) {
@@ -222,51 +234,71 @@ Page({
       return;
     }
     if (password.length < 6 || password.length > 20) {
-      wx.showToast({ title: '密码长度为6-20位', icon: 'none' });
+      wx.showToast({ title: '密码长度为 6-20 位', icon: 'none' });
       return;
     }
     if (email) {
-      const emailReg = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+      const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailReg.test(email)) {
         wx.showToast({ title: '邮箱格式不正确', icon: 'none' });
         return;
       }
     }
-
+  
     this.setData({ registerLoading: true });
     try {
       const openid = wx.getStorageSync('wechat_openid');
       const unionid = wx.getStorageSync('wechat_unionid');
-
-      // 注册时携带 openid/unionid，后端自动绑定
-      const response = await userApi.register({
+      const sessionKey = wx.getStorageSync('wechat_session_key');
+  
+      // 1) 先调用注册接口获取 userId
+      const registerResponse = await userApi.register({
         username,
         password,
-        email,
-        openid,
-        unionid
+        email
       });
-      // 响应格式：{code: 200, message: "操作成功", data: {token, userId, username, userType, realName}, success: true}
-      const data = response.data;
-
-      // 如果注册返回了 token 与用户信息，直接保存；否则兼容走一次登录以确保 token 就绪
-      if (data && data.token) {
-        request.setToken(data.token);
+      const registerData = registerResponse.data;
+  
+      // 2) 如果注册返回了 token 与用户信息，直接保存
+      if (registerData && registerData.token) {
+        request.setToken(registerData.token);
         wx.setStorageSync('userInfo', {
-          userId: data.userId,
-          username: data.username,
-          userType: data.userType,
-          realName: data.realName
+          userId: registerData.userId,
+          username: registerData.username,
+          userType: registerData.userType,
+          realName: registerData.realName
         });
+  
+        // 3) 调用绑定接口
+        if (openid && registerData.userId) {
+          await wechatApi.bind({
+            userId: registerData.userId,
+            openid,
+            unionid,
+            sessionKey
+          });
+        }
       } else {
-        // 如果注册接口没返回token，需要重新登录获取
-        await userApi.login({ username, password, openid, unionid });
+        // 如果注册接口没返回 token，需要重新登录获取
+        const loginResponse = await userApi.login({ username, password });
+        const loginData = loginResponse.data;
+  
+        // 获取到 userId 后，调用绑定接口
+        if (openid && loginData && loginData.userId) {
+          await wechatApi.bind({
+            userId: loginData.userId,
+            openid,
+            unionid,
+            sessionKey
+          });
+        }
       }
-
+  
       // 清除临时存储的微信信息
       wx.removeStorageSync('wechat_openid');
       wx.removeStorageSync('wechat_unionid');
-
+      wx.removeStorageSync('wechat_session_key');
+  
       // 提示并跳转主页
       wx.showToast({ title: '注册成功，微信已绑定', icon: 'success' });
       setTimeout(() => {

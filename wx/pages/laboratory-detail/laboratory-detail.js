@@ -12,6 +12,30 @@ Page({
     timeslots: []
   },
 
+  // 解析图片数据，处理多种格式
+  parseImages(images) {
+    if (!images) return [];
+    
+    // 如果是数组，直接返回
+    if (Array.isArray(images)) {
+      return images.filter(url => url && url.trim());
+    }
+    
+    // 如果是字符串，尝试分割
+    if (typeof images === 'string') {
+      // 逗号分隔
+      if (images.includes(',')) {
+        return images.split(',').map(url => url.trim()).filter(url => url);
+      }
+      // 单个图片 URL
+      if (images.trim()) {
+        return [images.trim()];
+      }
+    }
+    
+    return [];
+  },
+
   onLoad(options) {
     if (options.id) {
       this.setData({ labId: options.id });
@@ -59,7 +83,7 @@ Page({
         contactPhone: res.managerPhone,
         description: res.description,
         equipment: res.equipment ? res.equipment.split(',') : [],
-        images: res.images ? (Array.isArray(res.images) ? res.images : [res.images]) : [],
+        images: this.parseImages(res.images || res.imageUrl),
         status: res.status,
         building: res.building,
         floor: res.floor,

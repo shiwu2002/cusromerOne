@@ -23,11 +23,14 @@
             <el-select
               v-model="searchForm.status"
               placeholder="请选择状态"
-              clearable
               @change="handleSearch"
             >
-              <el-option label="停用" :value="0" />
-              <el-option label="正常" :value="1" />
+              <el-option
+                v-for="opt in STATUS_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -227,6 +230,37 @@ import {
 } from '@/api/laboratory'
 import { uploadLabImage } from '@/api/file'
 
+/* 状态选项常量，统一使用数字枚举，确保下拉框默认值可见 */
+const STATUS_OPTIONS = [
+  { label: '停用', value: 0 },
+  { label: '正常', value: 1 }
+]
+
+/* 将后端返回的实验室类型统一映射到下拉框使用的中文值，解决默认值不显示的问题 */
+const LAB_TYPE_MAP = {
+  0: '计算机',
+  1: '物理',
+  2: '化学',
+  3: '生物',
+  4: '其他',
+  COMPUTER: '计算机',
+  PHYSICS: '物理',
+  CHEMISTRY: '化学',
+  BIOLOGY: '生物',
+  OTHER: '其他',
+}
+
+/** 
+ * 规范化实验室类型：
+ * - 后端可能返回数字枚举或英文枚举，统一转成下拉框的中文字符串
+ * - 若匹配不到，保持原值（空字符串则显示占位）
+ */
+const normalizeLabType = (v) => {
+  if (v === null || v === undefined) return ''
+  const key = typeof v === 'string' ? v.trim() : v
+  return LAB_TYPE_MAP.hasOwnProperty(key) ? LAB_TYPE_MAP[key] : key
+}
+
 const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
@@ -238,7 +272,8 @@ const imageInputRef = ref(null)
 const searchForm = reactive({
   keyword: '',
   labType: '',
-  status: ''
+  // 默认显示“正常”状态，确保未点击时也有可见的默认值
+  status: 1
 })
 
 const pagination = reactive({
@@ -366,7 +401,7 @@ const handleEdit = (row) => {
     id: row.id,
     labName: row.labName,
     labNumber: row.labNumber || '',
-    labType: row.labType || '',
+    labType: normalizeLabType(row.labType || ''),
     building: row.building || '',
     floor: row.floor || '',
     location: row.location || '',
@@ -547,7 +582,8 @@ const handleRemoveImage = () => {
 }
 
 onMounted(() => {
-  loadLaboratoryList()
+  // 使用默认状态=1触发搜索，让“未点击时”也能显示数据与默认项文本
+  handleSearch()
 })
 </script>
 

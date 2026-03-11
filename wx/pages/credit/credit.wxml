@@ -1,0 +1,119 @@
+<!--pages/credit/credit.wxml-->
+<view class="credit-container">
+  <!-- 头部信用分卡片 -->
+  <view class="credit-header">
+    <view class="score-wrapper">
+      <view class="score-circle {{creditInfo.levelClass}}">
+        <view class="score-value">{{creditInfo.score}}</view>
+        <view class="score-label">信誉分</view>
+      </view>
+    </view>
+    <view class="level-badge {{creditInfo.levelClass}}">
+      <text class="level-text">{{creditInfo.levelText}}</text>
+    </view>
+    <view class="score-description">
+      {{creditInfo.description}}
+    </view>
+  </view>
+
+  <!-- 快捷操作 -->
+  <view class="quick-actions">
+    <view class="action-btn" bindtap="onTrainingRecover">
+      <view class="action-icon">📚</view>
+      <view class="action-text">培训恢复</view>
+    </view>
+    <view class="action-btn" bindtap="onViewRules">
+      <view class="action-icon">📋</view>
+      <view class="action-text">查看规则</view>
+    </view>
+  </view>
+
+  <!-- 信誉分记录 -->
+  <view class="logs-section">
+    <view class="section-header">
+      <view class="section-title">信誉分记录</view>
+      <view class="refresh-btn" bindtap="onRefresh">
+        <text class="iconfont icon-refresh">🔄</text>
+      </view>
+    </view>
+    
+    <view class="logs-list">
+      <view class="log-item" wx:for="{{creditLogs}}" wx:key="id">
+        <view class="log-header">
+          <view class="log-type {{item.changeType === 1 ? 'ADD' : 'DEDUCT'}}">
+            {{item.changeType === 1 ? '+' + item.changeScore : -item.changeScore}}
+          </view>
+          <view class="log-time">{{formatTime(item.createTime)}}</view>
+        </view>
+        <view class="log-content">
+          <view class="log-description">{{item.description}}</view>
+          <view class="log-after-score">当前分数：{{item.afterScore}}</view>
+        </view>
+      </view>
+      
+      <view class="empty-state" wx:if="{{creditLogs.length === 0}}">
+        <text class="empty-icon">📝</text>
+        <view class="empty-text">暂无信誉分记录</view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="onLoadMore">
+      <text>加载更多</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-icon">⏳</text>
+      <view class="loading-text">加载中...</view>
+    </view>
+  </view>
+</view>
+
+<!-- 信誉分规则弹窗 -->
+<view class="modal-mask" wx:if="{{showRulesModal}}" bindtap="closeRulesModal">
+  <view class="modal-container" catchtap="preventClose">
+    <view class="modal-header">
+      <view class="modal-title">信誉分规则</view>
+      <view class="modal-close" bindtap="closeRulesModal">
+        <text class="iconfont icon-close">×</text>
+      </view>
+    </view>
+    <view class="modal-body rules-content">
+      <scroll-view scroll-y="true">
+        <view class="rule-section">
+          <view class="rule-title">加分项</view>
+          <view class="rule-item" wx:for="{{rules.addRules}}" wx:key="index">
+            <text class="rule-score">+{{item.score}}分</text>
+            <text class="rule-desc">{{item.description}}</text>
+          </view>
+          <view class="empty-rule" wx:if="{{rules.addRules.length === 0}}">
+            暂无加分规则
+          </view>
+        </view>
+        
+        <view class="rule-section">
+          <view class="rule-title">减分项</view>
+          <view class="rule-item" wx:for="{{rules.deductRules}}" wx:key="index">
+            <text class="rule-score negative">-{{item.score}}分</text>
+            <text class="rule-desc">{{item.description}}</text>
+          </view>
+          <view class="empty-rule" wx:if="{{rules.deductRules.length === 0}}">
+            暂无减分规则
+          </view>
+        </view>
+        
+        <view class="rule-section">
+          <view class="rule-title">信用等级</view>
+          <view class="level-item" wx:for="{{rules.levels}}" wx:key="level">
+            <text class="level-name">{{item.name}}</text>
+            <text class="level-range">{{item.range}}</text>
+          </view>
+          <view class="empty-rule" wx:if="{{rules.levels.length === 0}}">
+            暂无等级规则
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

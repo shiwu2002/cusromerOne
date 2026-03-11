@@ -3,7 +3,7 @@
   <!-- 实验室图片轮播 -->
   <swiper class="lab-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{5000}}" duration="{{500}}">
     <swiper-item wx:for="{{laboratory.images}}" wx:key="index">
-      <image src="{{item}}" mode="aspectFill" class="lab-image" bindtap="previewImage" data-url="{{item}}" />
+      <image src="{{item}}" mode="aspectFill" class="lab-image" bindtap="previewImage" data-url="{{item}}" lazy-load="true" />
     </swiper-item>
     <swiper-item wx:if="{{!laboratory.images || laboratory.images.length === 0}}">
       <image src="/images/shiyanshi.png" mode="aspectFill" class="lab-image" />

@@ -127,8 +127,17 @@
               >
                 <div class="activity-dot"></div>
                 <div class="activity-content">
-                  <div class="activity-text">{{ activity.content }}</div>
-                  <div class="activity-time">{{ activity.time }}</div>
+                  <div class="activity-text">
+                    <span class="activity-user">{{ activity.user_name }}</span>
+                    预约了 
+                    <span class="activity-lab">{{ activity.lab_name }}</span>
+                  </div>
+                  <div class="activity-meta">
+                    <el-tag :type="getStatusTagType(activity.status)" size="small">
+                      {{ activity.status_text }}
+                    </el-tag>
+                    <span class="activity-time">{{ formatTime(activity.create_time) }}</span>
+                  </div>
                 </div>
               </div>
               <div v-if="recentActivities.length === 0" class="empty-data">
@@ -285,12 +294,18 @@ const loadData = async () => {
     const res = await getDashboardData()
     const data = res.data || {}
     
-    // 更新统计数据
+    console.log('=== 后端返回的完整数据 ===', data)
+    console.log('预约趋势数据:', data.reservationTrend)
+    console.log('实验室利用率:', data.labUtilization)
+    console.log('预约状态分布:', data.statusDistribution)
+    console.log('周几分布:', data.weekdayDistribution)
+    
+    // 更新统计数据 - 根据后端文档字段映射
     const metrics = data.coreMetrics || {}
     statistics.value.totalUsers = metrics.totalUsers || 0
-    statistics.value.totalLaboratories = metrics.totalLaboratories || 0
+    statistics.value.totalLaboratories = metrics.totalLabs || 0  // 后端返回 totalLabs
     statistics.value.totalReservations = metrics.totalReservations || 0
-    statistics.value.pendingApprovals = metrics.pendingApprovals || 0
+    statistics.value.pendingApprovals = metrics.pendingReservations || 0  // 后端返回 pendingReservations
     
     // 实时动态
     recentActivities.value = (data.recentActivities || []).slice(0, 8)
@@ -324,11 +339,49 @@ const nextTick = (fn) => {
   setTimeout(fn, 0)
 }
 
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const typeMap = {
+    0: 'warning',   // 待审核
+    1: 'success',   // 已通过
+    2: 'danger',    // 已拒绝
+    3: 'info',      // 已取消
+    4: ''           // 已完成
+  }
+  return typeMap[status] || 'info'
+}
+
+// 格式化时间
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
 // 预约趋势图（面积堆积图）
 const initReservationTrendChart = (data) => {
-  if (!reservationTrendChart.value) return
+  if (!reservationTrendChart.value) {
+    console.error('预约趋势图容器未找到')
+    return
+  }
+  
+  console.log('预约趋势数据:', data)
+  
+  if (!data || data.length === 0) {
+    console.warn('预约趋势数据为空')
+    return
+  }
   
   const chart = echarts.init(reservationTrendChart.value)
+  const dates = data.map(item => item.date)
+  const counts = data.map(item => item.count)
+  
   const option = {
     backgroundColor: 'transparent',
     tooltip: {
@@ -347,9 +400,12 @@ const initReservationTrendChart = (data) => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: data.map(item => item.date),
+      data: dates,
       axisLine: { lineStyle: { color: '#606266' } },
-      axisLabel: { color: '#909399' }
+      axisLabel: { 
+        color: '#909399',
+        rotate: 45  // 旋转 45 度避免重叠
+      }
     },
     yAxis: {
       type: 'value',
@@ -362,7 +418,7 @@ const initReservationTrendChart = (data) => {
       smooth: true,
       symbol: 'circle',
       symbolSize: 8,
-      data: data.map(item => item.count),
+      data: counts,
       itemStyle: {
         color: '#409EFF'
       },
@@ -381,9 +437,14 @@ const initReservationTrendChart = (data) => {
 
 // 雷达图
 const initRadarChart = (data) => {
-  if (!radarChart.value) return
+  if (!radarChart.value) {
+    console.error('雷达图容器未找到')
+    return
+  }
   
   const metrics = data.coreMetrics || {}
+  console.log('雷达图数据:', metrics)
+  
   const chart = echarts.init(radarChart.value)
   const option = {
     backgroundColor: 'transparent',
@@ -450,7 +511,17 @@ const initRadarChart = (data) => {
 
 // 实验室 TOP5
 const initTopLabsChart = (data) => {
-  if (!topLabsChart.value) return
+  if (!topLabsChart.value) {
+    console.error('实验室 TOP5 图表容器未找到')
+    return
+  }
+  
+  console.log('实验室 TOP5 数据:', data)
+  
+  if (!data || data.length === 0) {
+    console.warn('实验室 TOP5 数据为空')
+    return
+  }
   
   const chart = echarts.init(topLabsChart.value)
   const option = {
@@ -476,14 +547,14 @@ const initTopLabsChart = (data) => {
     },
     yAxis: {
       type: 'category',
-      data: data.slice(0, 5).map(item => item.labName),
+      data: data.slice(0, 5).map(item => item.lab_name),  // 后端字段：lab_name
       axisLine: { lineStyle: { color: '#606266' } },
       axisLabel: { color: '#909399' }
     },
     series: [{
-      name: '使用次数',
+      name: '预约次数',
       type: 'bar',
-      data: data.slice(0, 5).map(item => item.usageCount),
+      data: data.slice(0, 5).map(item => item.reservation_count),  // 后端字段：reservation_count
       barWidth: '60%',
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -500,7 +571,17 @@ const initTopLabsChart = (data) => {
 
 // 预约状态分布
 const initStatusChart = (data) => {
-  if (!statusChart.value) return
+  if (!statusChart.value) {
+    console.error('预约状态分布图表容器未找到')
+    return
+  }
+  
+  console.log('预约状态分布数据:', data)
+  
+  if (!data || data.length === 0) {
+    console.warn('预约状态分布数据为空')
+    return
+  }
   
   const chart = echarts.init(statusChart.value)
   const option = {
@@ -522,7 +603,7 @@ const initStatusChart = (data) => {
       radius: ['40%', '70%'],
       center: ['35%', '50%'],
       data: data.map(item => ({
-        name: item.status,
+        name: item.status_name,  // 后端字段：status_name
         value: item.count
       })),
       label: { show: false },
@@ -534,7 +615,7 @@ const initStatusChart = (data) => {
         borderColor: '#1e2832',
         borderWidth: 2
       },
-      color: ['#F56C6C', '#67C23A', '#909399', '#E6A23C', '#409EFF']
+      color: ['#ffa500', '#00ff88', '#ff4444', '#888', '#00d4ff']  // 根据文档颜色
     }]
   }
   chart.setOption(option)
@@ -543,9 +624,26 @@ const initStatusChart = (data) => {
 
 // 周几分布
 const initWeekdayChart = (data) => {
-  if (!weekdayChart.value) return
+  if (!weekdayChart.value) {
+    console.error('周几分布图表容器未找到')
+    return
+  }
+  
+  console.log('周几分布数据:', data)
+  
+  if (!data || data.length === 0) {
+    console.warn('周几分布数据为空')
+    return
+  }
   
   const chart = echarts.init(weekdayChart.value)
+  
+  // 按 DAYOFWEEK 排序（周日到周六）
+  const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const sortedData = [...data].sort((a, b) => {
+    return weekdayOrder.indexOf(a.weekday) - weekdayOrder.indexOf(b.weekday)
+  })
+  
   const option = {
     backgroundColor: 'transparent',
     tooltip: {
@@ -564,7 +662,18 @@ const initWeekdayChart = (data) => {
     },
     xAxis: {
       type: 'category',
-      data: data.map(item => item.weekday),
+      data: sortedData.map(item => {
+        const map = {
+          'Sunday': '周日',
+          'Monday': '周一',
+          'Tuesday': '周二',
+          'Wednesday': '周三',
+          'Thursday': '周四',
+          'Friday': '周五',
+          'Saturday': '周六'
+        }
+        return map[item.weekday] || item.weekday
+      }),
       axisLine: { lineStyle: { color: '#606266' } },
       axisLabel: { color: '#909399' }
     },
@@ -576,7 +685,7 @@ const initWeekdayChart = (data) => {
     series: [{
       name: '预约数',
       type: 'bar',
-      data: data.map(item => item.count),
+      data: sortedData.map(item => item.count),
       barWidth: '60%',
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -820,11 +929,15 @@ onBeforeUnmount(() => {
 }
 
 .radar-chart {
-  min-height: 250px;
+  min-height: 300px;  /* 增加高度 */
 }
 
 .top-labs-chart {
-  min-height: 250px;
+  min-height: 300px;  /* 增加高度 */
+}
+
+.charts-bottom-row .chart-container {
+  min-height: 300px;  /* 底部图表也要保证高度 */
 }
 
 .chart-box {
@@ -856,8 +969,9 @@ onBeforeUnmount(() => {
 }
 
 .chart-body {
-  height: calc(100% - 50px);
+  height: calc(100% - 60px);  /* 减去 header 的高度 */
   width: 100%;
+  min-height: 240px;  /* 保证最小高度 */
 }
 
 /* 实时动态列表 */
@@ -898,7 +1012,23 @@ onBeforeUnmount(() => {
   color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.activity-user {
+  color: #409EFF;
+  font-weight: 500;
+}
+
+.activity-lab {
+  color: #67C23A;
+  font-weight: 500;
+}
+
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .activity-time {

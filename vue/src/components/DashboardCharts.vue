@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard-charts">
+    <!-- 第一行：预约趋势图 + 实验室利用率 TOP10 -->
     <el-row :gutter="20">
       <!-- 预约趋势图 -->
       <el-col :xs="24" :md="12">
@@ -7,7 +8,7 @@
           <template #header>
             <div class="card-header">
               <el-icon><TrendCharts /></el-icon>
-              <span>预约趋势</span>
+              <span>预约趋势（近 30 天）</span>
             </div>
           </template>
           <div ref="reservationTrendChart" class="chart" v-loading="loading"></div>
@@ -28,6 +29,7 @@
       </el-col>
     </el-row>
 
+    <!-- 第二行：用户类型分布 + 预约状态分布 + 信用等级分布 -->
     <el-row :gutter="20" style="margin-top: 20px;">
       <!-- 用户类型分布 -->
       <el-col :xs="24" :md="8">
@@ -69,14 +71,74 @@
       </el-col>
     </el-row>
 
+    <!-- 第三行：时间段热度 + 周几分布 -->
     <el-row :gutter="20" style="margin-top: 20px;">
-      <!-- 实时动态 -->
+      <!-- 时间段热度分布 -->
       <el-col :xs="24" :md="12">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Calendar /></el-icon>
+              <span>时间段热度分布</span>
+            </div>
+          </template>
+          <div ref="timeSlotHeatmapChart" class="chart" v-loading="loading"></div>
+        </el-card>
+      </el-col>
+
+      <!-- 周几预约分布 -->
+      <el-col :xs="24" :md="12">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <el-icon><Calendar /></el-icon>
+              <span>周几预约分布</span>
+            </div>
+          </template>
+          <div ref="weekdayChart" class="chart" v-loading="loading"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 第四行：学院排行 + 容量使用率 + 实时动态 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <!-- 学院预约排行 -->
+      <el-col :xs="24" :md="8">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <el-icon><DataLine /></el-icon>
+              <span>学院预约排行 TOP10</span>
+            </div>
+          </template>
+          <div ref="collegeRankChart" class="chart" v-loading="loading"></div>
+        </el-card>
+      </el-col>
+
+      <!-- 容量使用率 -->
+      <el-col :xs="24" :md="8">
+        <el-card class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <el-icon><DataLine /></el-icon>
+              <span>实验室容量使用率</span>
+            </div>
+          </template>
+          <div ref="capacityUsageChart" class="chart" v-loading="loading"></div>
+        </el-card>
+      </el-col>
+
+      <!-- 实时动态 -->
+      <el-col :xs="24" :md="8">
         <el-card class="chart-card">
           <template #header>
             <div class="card-header">
               <el-icon><Bell /></el-icon>
               <span>实时动态</span>
+              <el-tag size="small" type="success" style="margin-left: auto;">
+                <el-icon><Refresh /></el-icon>
+                每 30 秒更新
+              </el-tag>
             </div>
           </template>
           <div class="activity-list" v-loading="loading">
@@ -88,27 +150,20 @@
             >
               <div class="activity-dot"></div>
               <div class="activity-content">
-                <div class="activity-text">{{ activity.content }}</div>
-                <div class="activity-time">{{ activity.time }}</div>
+                <div class="activity-user">{{ activity.userName }}</div>
+                <div class="activity-lab">{{ activity.labName }}</div>
+                <div class="activity-meta">
+                  <el-tag :type="getStatusTagType(activity.status)" size="small">
+                    {{ activity.statusText }}
+                  </el-tag>
+                  <span class="activity-time">{{ activity.time }}</span>
+                </div>
               </div>
             </div>
             <div v-if="recentActivities.length === 0" class="empty-data">
               暂无实时动态
             </div>
           </div>
-        </el-card>
-      </el-col>
-
-      <!-- 时间段热度 -->
-      <el-col :xs="24" :md="12">
-        <el-card class="chart-card">
-          <template #header>
-            <div class="card-header">
-              <el-icon><Calendar /></el-icon>
-              <span>周几预约分布</span>
-            </div>
-          </template>
-          <div ref="weekdayChart" class="chart" v-loading="loading"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -124,9 +179,10 @@ import {
   PieChart, 
   Star, 
   Bell,
-  Calendar 
+  Calendar,
+  Refresh
 } from '@element-plus/icons-vue'
-import { getDashboardData } from '@/api/dashboard'
+import { getDashboardData, getRecentActivities } from '@/api/dashboard'
 
 const loading = ref(false)
 const recentActivities = ref([])
@@ -137,9 +193,13 @@ const labUtilizationChart = ref(null)
 const userTypeChart = ref(null)
 const statusChart = ref(null)
 const creditChart = ref(null)
+const timeSlotHeatmapChart = ref(null)
 const weekdayChart = ref(null)
+const collegeRankChart = ref(null)
+const capacityUsageChart = ref(null)
 
 let charts = []
+let refreshTimer = null
 
 // 初始化所有图表
 const initCharts = async () => {
@@ -149,7 +209,7 @@ const initCharts = async () => {
     const data = res.data || {}
     
     // 实时动态
-    recentActivities.value = (data.recentActivities || []).slice(0, 8)
+    recentActivities.value = (data.recentActivities || []).slice(0, 10)
     
     await nextTick()
     
@@ -168,8 +228,17 @@ const initCharts = async () => {
     // 信用等级分布
     initCreditChart(data.creditLevelDistribution || [])
     
+    // 时间段热度分布
+    initTimeSlotHeatmapChart(data.timeSlotHeatmap || [])
+    
     // 周几分布
     initWeekdayChart(data.weekdayDistribution || [])
+    
+    // 学院排行
+    initCollegeRankChart(data.collegeRank || [])
+    
+    // 容量使用率
+    initCapacityUsageChart(data.capacityUsage || [])
     
   } catch (error) {
     console.error('加载图表数据失败:', error)
@@ -178,11 +247,51 @@ const initCharts = async () => {
   }
 }
 
+// 刷新实时动态
+const refreshRecentActivities = async () => {
+  try {
+    const res = await getRecentActivities()
+    recentActivities.value = (res.data || []).slice(0, 10)
+  } catch (error) {
+    console.error('刷新实时动态失败:', error)
+  }
+}
+
+// 启动定时刷新（30 秒）
+const startAutoRefresh = () => {
+  refreshTimer = setInterval(() => {
+    refreshRecentActivities()
+  }, 30000)
+}
+
+// 停止定时刷新
+const stopAutoRefresh = () => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+}
+
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const typeMap = {
+    0: 'warning',   // 待审核
+    1: 'success',   // 已通过
+    2: 'danger',    // 已拒绝
+    3: 'info',      // 已取消
+    4: ''           // 已完成
+  }
+  return typeMap[status] || 'info'
+}
+
 // 预约趋势图
 const initReservationTrendChart = (data) => {
   if (!reservationTrendChart.value) return
   
   const chart = echarts.init(reservationTrendChart.value)
+  const dates = data.map(item => item.date)
+  const counts = data.map(item => item.count)
+  
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -200,9 +309,12 @@ const initReservationTrendChart = (data) => {
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: data.map(item => item.date),
+      data: dates,
       axisLine: { lineStyle: { color: '#dcdfe6' } },
-      axisLabel: { color: '#909399' }
+      axisLabel: { 
+        color: '#909399',
+        rotate: 45
+      }
     },
     yAxis: {
       type: 'value',
@@ -213,7 +325,7 @@ const initReservationTrendChart = (data) => {
       name: '预约数',
       type: 'line',
       smooth: true,
-      data: data.map(item => item.count),
+      data: counts,
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: '#409EFF' },
@@ -238,6 +350,7 @@ const initLabUtilizationChart = (data) => {
   if (!labUtilizationChart.value) return
   
   const chart = echarts.init(labUtilizationChart.value)
+  
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -260,14 +373,14 @@ const initLabUtilizationChart = (data) => {
     },
     yAxis: {
       type: 'category',
-      data: data.map(item => item.labName),
+      data: data.map(item => item.lab_name).reverse(),
       axisLine: { lineStyle: { color: '#dcdfe6' } },
       axisLabel: { color: '#909399' }
     },
     series: [{
-      name: '使用次数',
+      name: '预约次数',
       type: 'bar',
-      data: data.map(item => item.usageCount),
+      data: data.map(item => item.reservation_count).reverse(),
       barWidth: '60%',
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
@@ -287,6 +400,7 @@ const initUserTypeChart = (data) => {
   if (!userTypeChart.value) return
   
   const chart = echarts.init(userTypeChart.value)
+  
   const option = {
     tooltip: {
       trigger: 'item',
@@ -305,7 +419,7 @@ const initUserTypeChart = (data) => {
       radius: ['40%', '70%'],
       center: ['35%', '50%'],
       data: data.map(item => ({
-        name: item.type,
+        name: item.type_name,
         value: item.count
       })),
       label: { show: false },
@@ -317,7 +431,7 @@ const initUserTypeChart = (data) => {
         borderColor: '#fff',
         borderWidth: 2
       },
-      color: ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C']
+      color: ['#409EFF', '#67C23A', '#E6A23C']
     }]
   }
   chart.setOption(option)
@@ -329,6 +443,7 @@ const initStatusChart = (data) => {
   if (!statusChart.value) return
   
   const chart = echarts.init(statusChart.value)
+  
   const option = {
     tooltip: {
       trigger: 'item',
@@ -347,7 +462,7 @@ const initStatusChart = (data) => {
       radius: ['40%', '70%'],
       center: ['35%', '50%'],
       data: data.map(item => ({
-        name: item.status,
+        name: item.status_name,
         value: item.count
       })),
       label: { show: false },
@@ -359,7 +474,7 @@ const initStatusChart = (data) => {
         borderColor: '#fff',
         borderWidth: 2
       },
-      color: ['#F56C6C', '#67C23A', '#909399', '#E6A23C']
+      color: ['#ffa500', '#00ff88', '#ff4444', '#888', '#00d4ff']
     }]
   }
   chart.setOption(option)
@@ -371,6 +486,7 @@ const initCreditChart = (data) => {
   if (!creditChart.value) return
   
   const chart = echarts.init(creditChart.value)
+  
   const option = {
     tooltip: {
       trigger: 'item',
@@ -389,7 +505,7 @@ const initCreditChart = (data) => {
       radius: ['40%', '70%'],
       center: ['35%', '50%'],
       data: data.map(item => ({
-        name: item.level,
+        name: item.level_name,
         value: item.count
       })),
       label: { show: false },
@@ -401,18 +517,19 @@ const initCreditChart = (data) => {
         borderColor: '#fff',
         borderWidth: 2
       },
-      color: ['#F56C6C', '#E6A23C', '#409EFF', '#67C23A']
+      color: ['#F56C6C', '#E6A23C', '#409EFF', '#67C23A', '#95D47A']
     }]
   }
   chart.setOption(option)
   charts.push(chart)
 }
 
-// 周几分布
-const initWeekdayChart = (data) => {
-  if (!weekdayChart.value) return
+// 时间段热度分布
+const initTimeSlotHeatmapChart = (data) => {
+  if (!timeSlotHeatmapChart.value) return
   
-  const chart = echarts.init(weekdayChart.value)
+  const chart = echarts.init(timeSlotHeatmapChart.value)
+  
   const option = {
     tooltip: {
       trigger: 'axis',
@@ -430,7 +547,77 @@ const initWeekdayChart = (data) => {
     },
     xAxis: {
       type: 'category',
-      data: data.map(item => item.weekday),
+      data: data.map(item => item.time_slot),
+      axisLine: { lineStyle: { color: '#dcdfe6' } },
+      axisLabel: { 
+        color: '#909399',
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: '#f2f6fc', type: 'dashed' } },
+      axisLabel: { color: '#909399' }
+    },
+    series: [{
+      name: '预约次数',
+      type: 'bar',
+      data: data.map(item => item.usage_count),
+      barWidth: '60%',
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#FF6B6B' },
+          { offset: 1, color: '#FFA07A' }
+        ]),
+        borderRadius: [4, 4, 0, 0]
+      }
+    }]
+  }
+  chart.setOption(option)
+  charts.push(chart)
+}
+
+// 周几分布
+const initWeekdayChart = (data) => {
+  if (!weekdayChart.value) return
+  
+  const chart = echarts.init(weekdayChart.value)
+  
+  // 按 DAYOFWEEK 排序（周日到周六）
+  const weekdayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const sortedData = [...data].sort((a, b) => {
+    return weekdayOrder.indexOf(a.weekday) - weekdayOrder.indexOf(b.weekday)
+  })
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e4e7ed',
+      textStyle: { color: '#606266' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedData.map(item => {
+        const map = {
+          'Sunday': '周日',
+          'Monday': '周一',
+          'Tuesday': '周二',
+          'Wednesday': '周三',
+          'Thursday': '周四',
+          'Friday': '周五',
+          'Saturday': '周六'
+        }
+        return map[item.weekday] || item.weekday
+      }),
       axisLine: { lineStyle: { color: '#dcdfe6' } },
       axisLabel: { color: '#909399' }
     },
@@ -442,7 +629,7 @@ const initWeekdayChart = (data) => {
     series: [{
       name: '预约数',
       type: 'bar',
-      data: data.map(item => item.count),
+      data: sortedData.map(item => item.count),
       barWidth: '60%',
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -457,14 +644,155 @@ const initWeekdayChart = (data) => {
   charts.push(chart)
 }
 
+// 学院排行
+const initCollegeRankChart = (data) => {
+  if (!collegeRankChart.value) return
+  
+  const chart = echarts.init(collegeRankChart.value)
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e4e7ed',
+      textStyle: { color: '#606266' },
+      formatter: (params) => {
+        const item = data[params.dataIndex]
+        return `${item.college}<br/>预约次数：${item.reservation_count}<br/>用户数：${item.user_count}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: '#f2f6fc', type: 'dashed' } },
+      axisLabel: { color: '#909399' }
+    },
+    yAxis: {
+      type: 'category',
+      data: data.map(item => item.college).reverse(),
+      axisLine: { lineStyle: { color: '#dcdfe6' } },
+      axisLabel: { 
+        color: '#909399',
+        interval: 0
+      }
+    },
+    series: [{
+      name: '预约次数',
+      type: 'bar',
+      data: data.map(item => item.reservation_count).reverse(),
+      barWidth: '60%',
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: '#9C27B0' },
+          { offset: 1, color: '#BA68C8' }
+        ]),
+        borderRadius: [0, 4, 4, 0]
+      }
+    }]
+  }
+  chart.setOption(option)
+  charts.push(chart)
+}
+
+// 容量使用率
+const initCapacityUsageChart = (data) => {
+  if (!capacityUsageChart.value) return
+  
+  const chart = echarts.init(capacityUsageChart.value)
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e4e7ed',
+      textStyle: { color: '#606266' },
+      formatter: (params) => {
+        const item = data[params.dataIndex]
+        return `${item.lab_name}<br/>容量：${item.capacity}人<br/>累计人数：${item.total_people}<br/>使用率：${item.usage_rate}%`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'value',
+      name: '使用率 (%)',
+      splitLine: { lineStyle: { color: '#f2f6fc', type: 'dashed' } },
+      axisLabel: { 
+        color: '#909399',
+        formatter: '{value}%'
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: data.map(item => item.lab_name).reverse(),
+      axisLine: { lineStyle: { color: '#dcdfe6' } },
+      axisLabel: { 
+        color: '#909399',
+        interval: 0
+      }
+    },
+    series: [{
+      name: '使用率',
+      type: 'bar',
+      data: data.map(item => item.usage_rate).reverse(),
+      barWidth: '60%',
+      itemStyle: {
+        color: (params) => {
+          const rate = params.value
+          if (rate >= 80) {
+            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#F56C6C' },
+              { offset: 1, color: '#F89898' }
+            ])
+          } else if (rate >= 50) {
+            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#E6A23C' },
+              { offset: 1, color: '#F5D082' }
+            ])
+          } else {
+            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#67C23A' },
+              { offset: 1, color: '#95D47A' }
+            ])
+          }
+        },
+        borderRadius: [0, 4, 4, 0]
+      },
+      label: {
+        show: true,
+        position: 'right',
+        formatter: '{c}%',
+        color: '#606266'
+      }
+    }]
+  }
+  chart.setOption(option)
+  charts.push(chart)
+}
+
 // 清理图表
 const disposeCharts = () => {
+  stopAutoRefresh()
   charts.forEach(chart => chart.dispose())
   charts = []
 }
 
 onMounted(() => {
   initCharts()
+  startAutoRefresh()
   window.addEventListener('resize', () => {
     charts.forEach(chart => chart.resize())
   })
@@ -537,16 +865,29 @@ defineExpose({ disposeCharts })
   flex: 1;
 }
 
-.activity-text {
-  color: #606266;
+.activity-user {
+  color: #303133;
   font-size: 14px;
-  line-height: 1.5;
+  font-weight: 500;
   margin-bottom: 4px;
+}
+
+.activity-lab {
+  color: #606266;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .activity-time {
   color: #909399;
   font-size: 12px;
+  margin-left: auto;
 }
 
 .empty-data {

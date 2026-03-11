@@ -13,6 +13,7 @@
     "pages/messages/messages",
     "pages/message-detail/message-detail",
     "pages/profile/profile",
+    "pages/credit/credit",
     "pages/settings/settings"
   ],
   "window": {

@@ -141,12 +141,12 @@ const loadStatistics = async () => {
     const data = dashboardData.data
     
     if (data) {
-      // 核心指标
+      // 核心指标 - 根据文档字段映射
       const metrics = data.coreMetrics || {}
       statistics.value.totalUsers = metrics.totalUsers || 0
-      statistics.value.totalLaboratories = metrics.totalLaboratories || 0
+      statistics.value.totalLaboratories = metrics.totalLabs || 0  // 注意：后端返回 totalLabs
       statistics.value.totalReservations = metrics.totalReservations || 0
-      statistics.value.pendingApprovals = metrics.pendingApprovals || 0
+      statistics.value.pendingApprovals = metrics.pendingReservations || 0  // 注意：后端返回 pendingReservations
     }
     
     console.log('=== 统计数据加载完成 ===')

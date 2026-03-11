@@ -83,6 +83,19 @@
         </view>
       </view>
 
+      <view class="menu-item" bindtap="goToCredit">
+        <view class="menu-icon">
+          <text class="iconfont icon-credit" style="color: #ff9800; font-size: 36rpx;">📊</text>
+        </view>
+        <view class="menu-content">
+          <view class="menu-title">我的信誉分</view>
+          <view class="menu-desc">{{creditScore > 0 ? '当前分数：' + creditScore : '查看信誉分'}}</view>
+        </view>
+        <view class="menu-arrow">
+          <text class="iconfont icon-arrow-right"></text>
+        </view>
+      </view>
+
       <view class="menu-item" bindtap="changePassword">
         <view class="menu-icon">
           <image class="icon-image" src="/images/密码.png" mode="aspectFit"></image>

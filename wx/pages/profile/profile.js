@@ -9,6 +9,7 @@ Page({
       completedReservations: 0,
       unreadMessages: 0
     },
+    creditScore: 0,
     showEditModal: false,
     showPasswordModal: false,
     editForm: {
@@ -24,6 +25,7 @@ Page({
   onLoad() {
     this.loadUserInfo();
     this.loadUserStats();
+    this.loadCreditScore();
   },
 
   onShow() {
@@ -35,7 +37,8 @@ Page({
   onPullDownRefresh() {
     Promise.all([
       this.loadUserInfo(),
-      this.loadUserStats()
+      this.loadUserStats(),
+      this.loadCreditScore()
     ]).finally(() => {
       wx.stopPullDownRefresh();
     });
@@ -108,6 +111,25 @@ Page({
       });
     } catch (error) {
       console.error('加载统计数据失败:', error);
+    }
+  },
+
+  // 加载信誉分
+  async loadCreditScore() {
+    try {
+      const response = await api.credit.getMyCredit();
+      const data = response.data;
+      
+      // 根据实际返回的数据结构提取
+      const creditData = data.credit || data;
+      const statsData = data.stats || {};
+      
+      this.setData({
+        creditScore: creditData.score || statsData.score || 0
+      });
+    } catch (error) {
+      console.error('加载信誉分失败:', error);
+      // 不显示错误提示，避免影响用户体验
     }
   },
 
@@ -350,6 +372,11 @@ Page({
   // 跳转到消息中心
   goToMessages() {
     wx.switchTab({ url: '/pages/messages/messages' });
+  },
+
+  // 跳转到信誉分页面
+  goToCredit() {
+    wx.navigateTo({ url: '/pages/credit/credit' });
   },
 
   // 跳转到设置

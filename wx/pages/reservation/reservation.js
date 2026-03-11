@@ -14,7 +14,6 @@ Page({
     numberOfPeople: 1,
     purpose: '',
     notes: '',
-    documents: [],
     submitting: false
   },
 
@@ -212,60 +211,6 @@ Page({
     this.setData({ notes: e.detail.value });
   },
 
-  // 上传文档
-  uploadDocument() {
-    if (this.data.documents.length >= 3) {
-      wx.showToast({
-        title: '最多上传3个文件',
-        icon: 'none'
-      });
-      return;
-    }
-    
-    wx.chooseMessageFile({
-      count: 3 - this.data.documents.length,
-      type: 'file',
-      success: async (res) => {
-        wx.showLoading({ title: '上传中...' });
-        
-        try {
-          const uploadPromises = res.tempFiles.map(async (file) => {
-            const response = await api.file.uploadDocument(file.path);
-            const uploadRes = response.data; // 提取实际数据
-            return {
-              name: file.name,
-              url: uploadRes.url
-            };
-          });
-          
-          const uploadedDocs = await Promise.all(uploadPromises);
-          const documents = [...this.data.documents, ...uploadedDocs];
-          
-          this.setData({ documents });
-          
-          wx.showToast({
-            title: '上传成功',
-            icon: 'success'
-          });
-        } catch (error) {
-          wx.showToast({
-            title: error.message || '上传失败',
-            icon: 'error'
-          });
-        } finally {
-          wx.hideLoading();
-        }
-      }
-    });
-  },
-
-  // 删除文档
-  removeDocument(e) {
-    const index = e.currentTarget.dataset.index;
-    const documents = this.data.documents.filter((_, i) => i !== index);
-    this.setData({ documents });
-  },
-
   // 验证表单
   validateForm() {
     if (!this.data.reservationDate) {
@@ -328,10 +273,10 @@ Page({
         timeSlotStr
       );
       
-      // 注意：根据接口文档，成功响应（无冲突）返回200，错误响应（有冲突）返回500
+      // 注意：根据接口文档，成功响应（无冲突）返回 200，错误响应（有冲突）返回 500
       // utils/request.js 封装中，code != 200 会进入 catch，或者在 then 中 resolve 但 data.success 为 false (取决于具体实现，这里假设 checkConflict 返回标准结构)
       // 如果后端在有冲突时直接抛出错误状态码，则会在 catch 块中处理
-      // 这里根据 API 描述: 成功响应(无冲突) code: 200; 错误响应(有冲突) code: 500
+      // 这里根据 API 描述：成功响应 (无冲突) code: 200; 错误响应 (有冲突) code: 500
       
       // 创建预约
       // 根据提供的 API 文档，参数为 userId(必填), labId(必填), reserveDate(必填), timeSlot(必填), purpose(可选), remark(可选)
@@ -342,8 +287,8 @@ Page({
       }
 
       // 最终确认字段名：
-      // userId: 从token获取或显式传递
-      // labId: 实验室ID (注意后端日志显示 labId 为 null，说明之前传递 laboratoryId 也是错的，或者后端期望 labId)
+      // userId: 从 token 获取或显式传递
+      // labId: 实验室 ID (注意后端日志显示 labId 为 null，说明之前传递 laboratoryId 也是错的，或者后端期望 labId)
       // reserveDate: 预约日期
       // timeSlot: 时间段字符串 (注意后端日志显示 timeSlot 为 null)
       // peopleNum: 人数
@@ -352,7 +297,7 @@ Page({
       
       const reservationData = {
         userId: userInfo.userId,
-        // 修正字段名：userInfo中存储的是username(小写)，同时兼容realName
+        // 修正字段名：userInfo 中存储的是 username(小写)，同时兼容 realName
         userName: userInfo.username || userInfo.realName || userInfo.nickName,
         labId: parseInt(this.data.labId),
         labName: this.data.laboratory.name, // 保留标准字段
@@ -368,17 +313,6 @@ Page({
         remark: this.data.notes || '' // 保留标准备注字段
       };
 
-      // 如果有文档，将文档链接追加到备注中（临时方案，直至 API 支持文档字段）
-      if (this.data.documents.length > 0) {
-         const docLinks = this.data.documents.map(d => `[文档: ${d.name}](${d.url})`).join('\n');
-         const appendText = '\n' + docLinks;
-         
-         // 追加到 equipment (备注信息)
-         reservationData.equipment = (reservationData.equipment || '') + appendText;
-         // 追加到 remark
-         reservationData.remark = (reservationData.remark || '') + appendText;
-      }
-      
       await api.reservation.createReservation(reservationData);
       
       wx.showToast({

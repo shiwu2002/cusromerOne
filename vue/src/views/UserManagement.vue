@@ -24,11 +24,14 @@
               placeholder="请选择角色"
               clearable
               @change="handleSearch"
+              popper-class="user-type-select"
             >
-              <el-option label="学生" :value="0" />
-              <el-option label="教师" :value="1" />
-              <el-option label="管理员" :value="2" />
-              <el-option label="超级管理员" :value="3" />
+              <el-option
+                v-for="opt in USER_TYPE_OPTIONS"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -56,7 +59,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="realName" label="姓名" width="100" />
-        <el-table-column prop="userType" label="角色" width="100">
+        <el-table-column prop="userType" label="角色" width="200">
           <template #default="{ row }">
             <el-tag :type="getUserTypeTag(row.userType)" size="small">
               {{ getUserTypeText(row.userType) }}
@@ -137,10 +140,12 @@
         </el-form-item>
         <el-form-item label="角色" prop="userType">
           <el-select v-model="formData.userType" placeholder="请选择角色">
-            <el-option label="学生" :value="0" />
-            <el-option label="教师" :value="1" />
-            <el-option label="管理员" :value="2" />
-            <el-option label="超级管理员" :value="3" />
+            <el-option
+              v-for="opt in USER_TYPE_OPTIONS"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="姓名" prop="realName">
@@ -169,6 +174,32 @@ import {
   resendVerifyCode
 } from '@/api/user'
 
+/* 统一角色枚举与类型，确保未点击时也能正确显示默认值 */
+const USER_TYPE_OPTIONS = [
+  { label: '学生', value: 0 },
+  { label: '教师', value: 1 },
+  { label: '管理员', value: 2 },
+  { label: '超级管理员', value: 3 }
+]
+
+const USER_TYPE_MAP = {
+  0: 0, 1: 1, 2: 2, 3: 3,
+  '0': 0, '1': 1, '2': 2, '3': 3,
+  STUDENT: 0, TEACHER: 1, ADMIN: 2, SUPER_ADMIN: 3,
+  '学生': 0, '教师': 1, '管理员': 2, '超级管理员': 3
+}
+
+/**
+ * 将后端返回的角色值(数字字符串/英文枚举/中文文本)统一转换为数字枚举
+ */
+const normalizeUserType = (v) => {
+  if (v === null || v === undefined || v === '') return null
+  const key = typeof v === 'string' ? v.trim() : v
+  return Object.prototype.hasOwnProperty.call(USER_TYPE_MAP, key)
+    ? USER_TYPE_MAP[key]
+    : Number(key)
+}
+
 const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
@@ -178,7 +209,7 @@ const formRef = ref(null)
 
 const searchForm = reactive({
   keyword: '',
-  userType: null
+  userType: ''  // 默认空字符串，不选择任何角色
 })
 
 const pagination = reactive({
@@ -245,10 +276,14 @@ const loadUserList = async () => {
       pageSize: pagination.pageSize
     }
     const res = await getUserList(params)
-    // API返回的data直接是数组
-    userList.value = res.data || []
-    // 如果API返回的是数组，总数就是数组长度
-    pagination.total = res.data?.length || 0
+    // 统一处理响应数据格式
+    if (Array.isArray(res.data)) {
+      userList.value = res.data
+      pagination.total = res.data.length
+    } else {
+      userList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
   } catch (error) {
     ElMessage.error('加载用户列表失败')
   } finally {
@@ -262,19 +297,34 @@ const handleSearch = async () => {
     const params = {}
     // 只添加有值的搜索参数
     if (searchForm.keyword) params.keyword = searchForm.keyword
-    if (searchForm.userType !== null && searchForm.userType !== '') params.userType = searchForm.userType
+    // 只有当 userType 有明确选择时才添加
+    if (searchForm.userType !== '' && searchForm.userType !== null && searchForm.userType !== undefined) {
+      params.userType = Number(searchForm.userType)
+    }
     
-    const res = await searchUsers(params)
+    let res
+    // 统一使用 searchUsers API，确保行为一致
+    // 即使没有筛选条件也调用 searchUsers，这样可以保证接口调用的一致性
+    res = await searchUsers({
+      ...params,
+      page: pagination.page,
+      pageSize: pagination.pageSize
+    })
+    
     // 统一处理响应数据格式
     if (Array.isArray(res.data)) {
       userList.value = res.data
-      pagination.total = res.data.length
+      // 如果API返回的是数组，总数就是数组长度
+      if (res.data?.length !== undefined) {
+        pagination.total = res.data.length
+      }
     } else {
       userList.value = res.data.list || []
       pagination.total = res.data.total || 0
     }
   } catch (error) {
     ElMessage.error('搜索用户失败')
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -282,24 +332,26 @@ const handleSearch = async () => {
 
 const handleReset = () => {
   searchForm.keyword = ''
-  searchForm.userType = null
+  searchForm.userType = ''  // 重置为空字符串
   pagination.page = 1
-  loadUserList()
+  handleSearch()
 }
 
 const handleEdit = (row) => {
   dialogTitle.value = '编辑用户'
   isEdit.value = true
+  console.log('原始 userType:', row.userType, '类型:', typeof row.userType)
   Object.assign(formData, {
     id: row.id,
     username: row.username,
     email: row.email,
     phone: row.phone,
-    userType: row.userType,
+    userType: normalizeUserType(row.userType), // 统一为数字枚举，确保下拉框默认值可显示
     realName: row.realName,
     college: row.college,
     major: row.major
   })
+  console.log('设置后的 userType:', formData.userType, '类型:', typeof formData.userType)
   dialogVisible.value = true
 }
 
@@ -408,7 +460,8 @@ const handlePageChange = () => {
 }
 
 onMounted(() => {
-  loadUserList()
+  // 页面加载时自动搜索，不设置默认筛选条件
+  handleSearch()
 })
 </script>
 
@@ -451,5 +504,10 @@ onMounted(() => {
     display: block;
     margin-right: 0;
   }
+}
+
+/* 角色下拉框样式 */
+:deep(.user-type-select) {
+  z-index: 3000 !important;
 }
 </style>
