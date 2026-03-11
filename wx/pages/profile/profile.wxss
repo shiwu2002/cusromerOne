@@ -154,22 +154,27 @@
 .menu-icon {
   width: 80rpx;
   height: 80rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   flex-shrink: 0;
+  background: transparent;
 }
 
 .menu-icon.admin {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: transparent;
 }
 
 .menu-icon .iconfont {
   color: white;
   font-size: 36rpx;
+}
+
+.menu-icon .icon-image {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .menu-content {

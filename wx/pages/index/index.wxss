@@ -42,17 +42,22 @@
   position: relative;
   width: 100rpx;
   height: 100rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 48rpx;
+  background: transparent;
   box-shadow: 0 8rpx 16rpx rgba(102, 126, 234, 0.3);
 }
 
 .menu-icon .iconfont {
   filter: brightness(2);
+}
+
+.menu-icon .menu-icon-img {
+  width: 64rpx;
+  height: 64rpx;
 }
 
 .badge {

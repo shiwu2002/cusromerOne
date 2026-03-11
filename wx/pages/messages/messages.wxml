@@ -3,7 +3,7 @@
   <!-- 未读消息统计 -->
   <view class="unread-banner" wx:if="{{unreadCount > 0}}">
     <view class="unread-info">
-      <text class="unread-icon">📬</text>
+      <image class="unread-icon-img" src="/images/消息 重要消息标记.png" mode="aspectFit"></image>
       <text class="unread-text">您有 {{unreadCount}} 条未读消息</text>
     </view>
     <button class="mark-all-btn" bindtap="markAllAsRead" size="mini">全部标记已读</button>
@@ -59,7 +59,7 @@
 
       <!-- 关联预约信息 -->
       <view class="related-info" wx:if="{{item.relatedType === 'reservation' && item.relatedId}}">
-        <text class="info-icon">📅</text>
+        <image class="related-icon-img" src="/images/预约.png" mode="aspectFit"></image>
         <text class="info-text">预约编号：{{item.relatedId}}</text>
       </view>
     </view>

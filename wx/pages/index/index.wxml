@@ -37,26 +37,26 @@
   <view class="quick-menu">
     <view class="menu-item" bindtap="navigateToReservation">
       <view class="menu-icon">
-        <text class="iconfont">📅</text>
+        <image class="menu-icon-img" src="/images/预约.png" mode="aspectFit"></image>
       </view>
       <text class="menu-text">我要预约</text>
     </view>
     <view class="menu-item" bindtap="navigateToMyReservations">
       <view class="menu-icon">
-        <text class="iconfont">📋</text>
+        <image class="menu-icon-img" src="/images/预约.png" mode="aspectFit"></image>
       </view>
       <text class="menu-text">我的预约</text>
     </view>
     <view class="menu-item" bindtap="navigateToMessages">
       <view class="menu-icon">
-        <text class="iconfont">✉️</text>
+        <image class="menu-icon-img" src="/images/消息 重要消息标记.png" mode="aspectFit"></image>
         <view class="badge" wx:if="{{unreadCount > 0}}">{{unreadCount > 99 ? '99+' : unreadCount}}</view>
       </view>
       <text class="menu-text">消息通知</text>
     </view>
     <view class="menu-item" bindtap="navigateToProfile">
       <view class="menu-icon">
-        <text class="iconfont">👤</text>
+        <image class="menu-icon-img" src="/images/个人中心.png" mode="aspectFit"></image>
       </view>
       <text class="menu-text">个人中心</text>
     </view>

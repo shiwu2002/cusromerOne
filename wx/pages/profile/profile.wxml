@@ -40,7 +40,7 @@
     <view class="menu-group">
       <view class="menu-item" bindtap="goToMyReservations">
         <view class="menu-icon">
-          <text class="iconfont icon-calendar"></text>
+          <image class="icon-image" src="/images/预约.png" mode="aspectFit"></image>
         </view>
         <view class="menu-content">
           <view class="menu-title">我的预约</view>
@@ -53,7 +53,7 @@
 
       <view class="menu-item" bindtap="goToMessages">
         <view class="menu-icon">
-          <text class="iconfont icon-message"></text>
+          <image class="icon-image" src="/images/消息.png" mode="aspectFit"></image>
         </view>
         <view class="menu-content">
           <view class="menu-title">消息中心</view>
@@ -72,7 +72,7 @@
     <view class="menu-group">
       <view class="menu-item" bindtap="editProfile">
         <view class="menu-icon">
-          <text class="iconfont icon-edit"></text>
+          <image class="icon-image" src="/images/编辑.png" mode="aspectFit"></image>
         </view>
         <view class="menu-content">
           <view class="menu-title">编辑资料</view>
@@ -85,7 +85,7 @@
 
       <view class="menu-item" bindtap="changePassword">
         <view class="menu-icon">
-          <text class="iconfont icon-lock"></text>
+          <image class="icon-image" src="/images/密码.png" mode="aspectFit"></image>
         </view>
         <view class="menu-content">
           <view class="menu-title">修改密码</view>
@@ -98,7 +98,7 @@
 
       <view class="menu-item" bindtap="goToSettings">
         <view class="menu-icon">
-          <text class="iconfont icon-setting"></text>
+          <image class="icon-image" src="/images/设置.png" mode="aspectFit"></image>
         </view>
         <view class="menu-content">
           <view class="menu-title">设置</view>

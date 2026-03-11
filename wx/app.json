@@ -17,13 +17,13 @@
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#1989fa",
+    "navigationBarBackgroundColor": "#667eea",
     "navigationBarTitleText": "实验室预约系统",
     "navigationBarTextStyle": "white"
   },
   "tabBar": {
     "color": "#7A7E83",
-    "selectedColor": "#1989fa",
+    "selectedColor": "#667eea",
     "borderStyle": "black",
     "backgroundColor": "#ffffff",
     "list": [
