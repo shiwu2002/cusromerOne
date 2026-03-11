@@ -118,39 +118,48 @@ export const getUserStatistics = () => {
   })
 }
 
-// 发送注册验证邮件
+// 发送注册验证邮件（发送验证码）
 export const sendRegisterEmail = (data) => {
-  return request({
-    url: '/api/user/send-register-email',
-    method: 'post',
-    data
+ return request({
+   url: '/api/user/send-register-email',
+  method: 'post',
+  data
   })
 }
 
-// 验证邮箱
-export const verifyEmail = (token) => {
-  return request({
-    url: '/api/user/verify-email',
-    method: 'get',
-    params: { token }
+// 验证注册验证码（新增）
+export const verifyRegisterCode = (data) => {
+ return request({
+   url: '/api/user/verify-register-code',
+  method: 'post',
+  data
   })
 }
 
-// 发送验证码
+// 重新发送验证码
+export const resendVerifyCode = (data) => {
+ return request({
+  url: '/api/user/resend-verify-code',
+  method: 'post',
+  data
+  })
+}
+
+// 发送验证码（用于忘记密码等功能）
 export const sendCode = (data) => {
-  return request({
-    url: '/api/user/send-code',
-    method: 'post',
-    data
+ return request({
+  url: '/api/user/send-code',
+  method: 'post',
+  data
   })
 }
 
-// 验证验证码
+// 验证验证码（用于忘记密码等功能）
 export const verifyCode = (data) => {
-  return request({
-    url: '/api/user/verify-code',
-    method: 'post',
-    data
+ return request({
+  url: '/api/user/verify-code',
+  method: 'post',
+  data
   })
 }
 
@@ -167,15 +176,6 @@ export const resetPasswordByEmail = (data) => {
 export const bindEmail = (data) => {
   return request({
     url: '/api/user/bind-email',
-    method: 'post',
-    data
-  })
-}
-
-// 重新发送验证邮件
-export const resendVerifyEmail = (data) => {
-  return request({
-    url: '/api/user/resend-verify-email',
     method: 'post',
     data
   })

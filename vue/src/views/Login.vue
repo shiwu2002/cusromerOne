@@ -131,11 +131,33 @@
             
             <el-form-item prop="email">
               <el-input
-                v-model="registerForm.email"
+               v-model="registerForm.email"
                 placeholder="请输入邮箱"
                 prefix-icon="Message"
                 size="large"
               />
+            </el-form-item>
+            
+            <!-- Added: 验证码输入框 -->
+            <el-form-item prop="code">
+              <div class="code-input-container">
+                <el-input
+                 v-model="registerForm.code"
+                  placeholder="请输入验证码"
+                  prefix-icon="Checked"
+                  size="large"
+                 style="flex: 1"
+                />
+                <el-button
+                  type="primary"
+                  size="large"
+                  :disabled="registerCountdown > 0"
+                  @click="handleSendRegisterCode"
+                 style="margin-left: 10px"
+                >
+                  {{ registerCountdown > 0 ? `${registerCountdown}秒后重试` : '获取验证码' }}
+                </el-button>
+              </div>
             </el-form-item>
             
             <el-form-item>
@@ -231,7 +253,7 @@ import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store'
-import { login, register, sendCode, verifyCode, resetPasswordByEmail } from '@/api/user'
+import { login, register, sendRegisterEmail, verifyRegisterCode } from '@/api/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -276,8 +298,13 @@ const registerForm = reactive({
   realName: '',
   userType: null,
   phone: '',
-  email: ''
+  email: '',
+  code: ''  // Added: 验证码字段
 })
+
+// Added: 注册倒计时
+const registerCountdown = ref(0)
+let registerCountdownTimer= null
 
 // 忘记密码表单
 const forgotPasswordForm = reactive({
@@ -380,6 +407,10 @@ const registerRules = {
   ],
   email: [
     { required: true, validator: validateEmail, trigger: 'blur' }
+  ],
+  code: [  // Added: 验证码验证规则
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { min: 6, max: 6, message: '验证码为 6 位数字', trigger: 'blur' }
   ]
 }
 
@@ -516,40 +547,79 @@ const handleForgotPasswordClose = () => {
   codeCountdown.value = 0
 }
 
+// Added: 发送注册验证码
+const handleSendRegisterCode = async () => {
+ if (!registerForm.email || !registerForm.username) {
+  ElMessage.warning('请先填写邮箱和用户名')
+ return
+}
+
+ try {
+  await sendRegisterEmail({
+   email: registerForm.email,
+  username: registerForm.username
+  })
+  ElMessage.success('验证码已发送，请查收邮件')
+  
+  // 开始倒计时
+ registerCountdown.value = 60
+ registerCountdownTimer= setInterval(() => {
+  registerCountdown.value--
+    if (registerCountdown.value <= 0) {
+      clearInterval(registerCountdownTimer)
+    registerCountdownTimer= null
+    }
+  }, 1000)
+ } catch (error) {
+  ElMessage.error(error.message || '发送验证码失败')
+}
+}
+
 // 注册处理
 const handleRegister = async () => {
-  if (!registerFormRef.value) return
-  
-  await registerFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        const res = await register({
-          username: registerForm.username,
-          password: registerForm.password,
-          realName: registerForm.realName,
-          userType: registerForm.userType,
-          phone: registerForm.phone,
-          email: registerForm.email
-        })
-        
-        ElMessage.success('注册成功，请登录')
-        
-        // 清空注册表单
-        registerFormRef.value.resetFields()
-        
-        // 切换到登录标签页
-        activeTab.value = 'login'
-        
-        // 自动填充用户名到登录表单
-        loginForm.username = registerForm.username
-      } catch (error) {
-        ElMessage.error(error.message || '注册失败，请稍后重试')
-      } finally {
-        loading.value = false
+ if (!registerFormRef.value) return
+ 
+ await registerFormRef.value.validate(async (valid) => {
+  if (valid) {
+    loading.value = true
+    try {
+      // 步骤 1: 验证验证码
+    const verifyRes = await verifyRegisterCode({
+       email: registerForm.email,
+      code: registerForm.code
+      })
+      
+      if (verifyRes.code !== 200) {
+        throw new Error(verifyRes.message || '验证码错误')
       }
+      
+      // 步骤 2: 验证码正确，完成注册
+    const res = await register({
+      username: registerForm.username,
+      password: registerForm.password,
+      realName: registerForm.realName,
+      userType: registerForm.userType,
+       phone: registerForm.phone,
+       email: registerForm.email
+      })
+      
+      ElMessage.success('注册成功，请登录')
+      
+      // 清空注册表单
+    registerFormRef.value.resetFields()
+      
+      // 切换到登录标签页
+      activeTab.value = 'login'
+      
+      // 自动填充用户名到登录表单
+      loginForm.username = registerForm.username
+    } catch (error) {
+      ElMessage.error(error.message || '注册失败，请稍后重试')
+    } finally {
+      loading.value = false
     }
-  })
+  }
+ })
 }
 
 // 组件卸载时清理定时器
@@ -557,7 +627,11 @@ onUnmounted(() => {
   if (countdownTimer) {
     clearInterval(countdownTimer)
   }
+  if (registerCountdownTimer) {
+    clearInterval(registerCountdownTimer)
+  }
 })
+
 </script>
 
 <style scoped>

@@ -84,9 +84,9 @@
               v-if="row.email && !row.emailVerified"
               type="success" 
               size="small" 
-              @click="handleSendVerifyEmail(row)"
+              @click="handleSendVerifyCode(row)"
             >
-              发送验证邮件
+              发送验证码
             </el-button>
             <el-button
               :type="row.status === 1 ? 'danger' : 'success'"
@@ -166,7 +166,7 @@ import {
   updateUser,
   updateUserStatus,
   resetPassword,
-  resendVerifyEmail
+  resendVerifyCode
 } from '@/api/user'
 
 const loading = ref(false)
@@ -356,9 +356,9 @@ const handleResetPassword = (row) => {
   }).catch(() => {})
 }
 
-const handleSendVerifyEmail = (row) => {
+const handleSendVerifyCode = (row) => {
   ElMessageBox.confirm(
-    `确定要重新发送验证邮件到 ${row.email} 吗？`,
+    `确定要重新发送验证码到 ${row.email} 吗？`,
     '确认操作',
     {
       confirmButtonText: '确定',
@@ -367,10 +367,10 @@ const handleSendVerifyEmail = (row) => {
     }
   ).then(async () => {
     try {
-      await resendVerifyEmail({ userId: row.id })
-      ElMessage.success('验证邮件已发送，请提醒用户查收')
+      await resendVerifyCode({ userId: row.id })
+      ElMessage.success('验证码已发送，请提醒用户查收')
     } catch (error) {
-      ElMessage.error(error.message || '发送验证邮件失败')
+      ElMessage.error(error.message || '发送验证码失败')
     }
   }).catch(() => {})
 }

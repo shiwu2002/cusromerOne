@@ -394,7 +394,11 @@
 
 /* 统计数据 */
 .statistics-section {
-  margin-top: 20rpx;
+  margin: 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .statistics-grid {
@@ -408,7 +412,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12rpx;
-  padding: 30rpx 0;
+  padding: 24rpx 0;
   background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%);
   border-radius: 16rpx;
   transition: all 0.3s ease;
@@ -422,7 +426,7 @@
 }
 
 .stat-value {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: bold;
   transition: all 0.3s ease;
 }

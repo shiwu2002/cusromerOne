@@ -29,7 +29,7 @@ App({
   onShow() {
     console.log('小程序显示')
     
-    // 如果已登录，更新未读消息数
+    // 只有已登录时才更新未读消息数
     if (this.globalData.token) {
       this.updateUnreadCount()
     }
@@ -98,26 +98,60 @@ App({
         this.globalData.userInfo = userInfo
         console.log('已登录:', userInfo.username)
         
-        // 更新未读消息数
-        this.updateUnreadCount()
+        // 验证 token 有效性（可选）
+        this.validateToken(token)
       } else {
         console.log('未登录')
+        // 清除残留数据
+        this.clearLoginInfo()
       }
     } catch (error) {
       console.error('检查登录状态失败:', error)
+    }
+  },
+  
+  // 验证 token 有效性
+  async validateToken(token) {
+    try {
+      // 调用一个简单的需要登录的接口来验证 token
+      await api.user.getProfile()
+      console.log('Token 验证成功')
+    } catch (error) {
+      // token 无效或过期，清除登录状态
+      console.warn('Token 验证失败，清除登录状态')
+      this.clearLoginInfo()
     }
   },
 
   // 更新未读消息数
   async updateUnreadCount() {
     try {
+      // 先检查是否有有效的 token
+      const token = request.getToken()
+      if (!token) {
+        console.warn('无有效 token，跳过更新未读消息')
+        return
+      }
+        
       const result = await api.message.getUnreadCount()
       this.globalData.unreadCount = result.count || 0
-      
-      // 更新tabBar徽标
+        
+      // 更新 tabBar 徽标
       this.updateTabBarBadge()
     } catch (error) {
-      console.error('更新未读消息数失败:', error)
+      // 如果是 401 错误，清除登录状态并跳转
+      if (error.statusCode === 401) {
+        console.warn('Token 已失效，清除登录状态')
+        this.clearLoginInfo()
+        // 延迟跳转到登录页，避免频繁跳转
+        setTimeout(() => {
+          wx.redirectTo({
+            url: '/pages/login/login'
+          })
+        }, 500)
+      } else {
+        console.error('更新未读消息数失败:', error)
+      }
     }
   },
 

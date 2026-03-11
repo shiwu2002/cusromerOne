@@ -45,6 +45,18 @@
         style="width: 100%"
       >
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="imageUrl" label="图片" width="100">
+          <template #default="{ row }">
+            <el-image
+              v-if="row.imageUrl"
+              :src="row.imageUrl"
+              :preview-src-list="[row.imageUrl]"
+              fit="cover"
+              style="width: 60px; height: 60px; cursor: pointer;"
+            />
+            <span v-else>无图片</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="labName" label="实验室名称" width="200" />
         <el-table-column prop="location" label="位置" width="200" />
         <el-table-column prop="capacity" label="容量" width="100" align="center" />
@@ -148,6 +160,48 @@
             placeholder="请输入实验室描述"
           />
         </el-form-item>
+        <el-form-item label="图片" prop="imageUrl">
+          <div class="image-uploader">
+            <el-image
+              v-if="formData.imageUrl"
+              :src="formData.imageUrl"
+              fit="cover"
+              class="image-preview"
+            >
+              <template #error>
+                <div class="image-slot">图片加载失败</div>
+              </template>
+            </el-image>
+            <div 
+              v-else 
+              class="image-uploader-trigger"
+              @click="triggerImageUpload"
+            >
+              <el-icon><Plus /></el-icon>
+              <span>点击上传</span>
+            </div>
+            <input
+              ref="imageInputRef"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleImageChange"
+            />
+            <div class="image-tips">
+              <el-button size="small" @click="triggerImageUpload">
+                {{ formData.imageUrl ? '更换图片' : '上传图片' }}
+              </el-button>
+              <el-button 
+                v-if="formData.imageUrl" 
+                size="small" 
+                type="danger" 
+                @click="handleRemoveImage"
+              >
+                删除图片
+              </el-button>
+            </div>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -162,6 +216,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import {
   getLaboratoryList,
   searchLaboratories,
@@ -170,6 +225,7 @@ import {
   deleteLaboratory,
   updateLaboratoryStatus
 } from '@/api/laboratory'
+import { uploadLabImage } from '@/api/file'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -177,6 +233,7 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增实验室')
 const isEdit = ref(false)
 const formRef = ref(null)
+const imageInputRef = ref(null)
 
 const searchForm = reactive({
   keyword: '',
@@ -202,7 +259,8 @@ const formData = reactive({
   location: '',
   capacity: 1,
   equipment: '',
-  description: ''
+  description: '',
+  imageUrl: ''
 })
 
 const formRules = {
@@ -314,7 +372,8 @@ const handleEdit = (row) => {
     location: row.location || '',
     capacity: row.capacity || 1,
     equipment: row.equipment || '',
-    description: row.description || ''
+    description: row.description || '',
+    imageUrl: row.imageUrl || ''
   })
   dialogVisible.value = true
 }
@@ -337,7 +396,8 @@ const handleSubmit = async () => {
           capacity: formData.capacity,
           equipment: formData.equipment,
           description: formData.description,
-          status: 1 // 新增时默认为可用状态
+          imageUrl: formData.imageUrl,
+          status: 1 // 新增时默认可用状态
         }
         
         if (isEdit.value) {
@@ -372,7 +432,8 @@ const handleDialogClose = () => {
     location: '',
     capacity: 1,
     equipment: '',
-    description: ''
+    description: '',
+    imageUrl: ''
   })
 }
 
@@ -428,6 +489,63 @@ const handlePageChange = () => {
   loadLaboratoryList()
 }
 
+// 图片相关方法
+const triggerImageUpload = () => {
+  imageInputRef.value?.click()
+}
+
+const handleImageChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  // 验证文件大小（限制 5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return
+  }
+  
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('只能上传图片文件')
+    return
+  }
+  
+  try {
+    const uploadFormData = new FormData()
+    // 使用 files 参数名，与后端接口匹配
+    uploadFormData.append('files', file)
+    
+    const res = await uploadLabImage(uploadFormData)
+    
+    // 处理返回结果
+    if (res.data?.images && res.data.images.length > 0) {
+      // 取第一张图片的 URL
+      const imageUrl = res.data.images[0].url || res.data.images[0].path
+      formData.imageUrl = imageUrl
+      ElMessage.success('图片上传成功')
+    } else {
+      ElMessage.error('图片上传失败：未返回图片信息')
+    }
+  } catch (error) {
+    console.error('上传失败:', error)
+    ElMessage.error('图片上传失败')
+  } finally {
+    // 清空 input，允许重复上传同一文件
+    event.target.value = ''
+  }
+}
+
+const handleRemoveImage = () => {
+  ElMessageBox.confirm('确定要删除这张图片吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    formData.imageUrl = ''
+    ElMessage.success('图片已删除')
+  }).catch(() => {})
+}
+
 onMounted(() => {
   loadLaboratoryList()
 })
@@ -457,6 +575,64 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.image-uploader {
+  width: 100%;
+}
+
+.image-preview {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.image-uploader-trigger {
+  width: 200px;
+  height: 200px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8c939d;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.image-uploader-trigger:hover {
+  border-color: #409eff;
+}
+
+.image-uploader-trigger .el-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.image-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 12px;
+}
+
+.image-tips {
+  margin-top: 10px;
+}
+
+.image-tips .el-button {
+  margin-right: 8px;
 }
 
 @media (max-width: 768px) {

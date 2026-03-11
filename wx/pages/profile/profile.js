@@ -383,14 +383,18 @@ Page({
       confirmColor: '#ff4757',
       success: (res) => {
         if (res.confirm) {
-          // 清除本地存储的token
-          wx.removeStorageSync('token');
-          // 清除tabBar徽标
-          wx.removeTabBarBadge({ index: 3 });
-          // 跳转到登录页
-          wx.reLaunch({ url: '/pages/login/login' });
+          // 调用 API 的 logout 方法清空 token 和用户信息
+          api.user.logout()
+            
+          // 清除 tabBar 徽标
+          wx.removeTabBarBadge({ index: 3 })
+            
+          // 跳转到登录页（使用 reLaunch 确保关闭所有页面）
+          wx.reLaunch({
+            url: '/pages/login/login'
+          })
         }
       }
-    });
+    })
   }
 });

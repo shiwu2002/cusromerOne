@@ -12,15 +12,12 @@ const CACHE_DURATION = 5 * 60 * 1000 // 缓存5分钟
 
 Page({
   data: {
-    // 轮播图数据
-    banners: [
-      { id: 1, image: '/images/shiyanshi.png', title: '实验室预约系统' },
-      { id: 2, image: '/images/shiyanshiguanli.png', title: '实验室管理' }
-    ],
+    // 轮播图数据（初始为空，从实验室加载）
+    banners: [],
     // 公告列表
     notices: [
       '欢迎使用实验室预约系统，请合理安排预约时间',
-      '请提前15分钟到达实验室，做好实验准备',
+      '请提前 15 分钟到达实验室，做好实验准备',
       '实验结束后请及时清理实验台，关闭设备电源'
     ],
     // 推荐实验室列表
@@ -144,21 +141,32 @@ Page({
     try {
       const response = await api.laboratory.getAvailableLaboratories()
       const res = response.data // 提取实际数据
-      
-      if (res && Array.isArray(res)) {
-        // 只显示前6个推荐实验室
-        const laboratories = res.slice(0, 6)
         
-        // 处理数据：添加默认图片
-        const processedLabs = laboratories.map(lab => ({
+      if (res && Array.isArray(res)) {
+        // 获取所有可用实验室
+        const allLabs = res.map(lab => ({
           ...lab,
           imageUrl: lab.imageUrl || '/images/shiyanshi.png'
         }))
-        
-        this.setData({ laboratories: processedLabs })
-        
+          
+        // 使用前 6 个实验室的图片和名称作为轮播图
+        const carouselImages = allLabs.slice(0, 6).map((lab, index) => ({
+          id: lab.id,
+          image: lab.imageUrl,
+          title: lab.labName || `实验室${index + 1}`
+        }))
+          
+        // 如果轮播图不为空，更新轮播图数据
+        if (carouselImages.length > 0) {
+          this.setData({ banners: carouselImages })
+        }
+          
+        // 只显示前 6 个推荐实验室
+        const laboratories = allLabs.slice(0, 6)
+        this.setData({ laboratories: laboratories })
+          
         // 缓存数据
-        wx.setStorageSync(CACHE_KEY.LABORATORIES, processedLabs)
+        wx.setStorageSync(CACHE_KEY.LABORATORIES, laboratories)
         wx.setStorageSync(CACHE_KEY.TIMESTAMP, Date.now())
       }
     } catch (error) {

@@ -7,6 +7,32 @@
     </swiper-item>
   </swiper>
 
+  <!-- 用户统计 -->
+  <view class="section statistics-section" wx:if="{{statistics}}">
+    <view class="section-header">
+      <text class="section-title">我的预约统计</text>
+      <text class="section-more" bindtap="navigateToMyReservations">查看详情 ></text>
+    </view>
+    <view class="statistics-grid">
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-pending">{{statistics.pending || 0}}</text>
+        <text class="stat-label">待审核</text>
+      </view>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-approved">{{statistics.approved || 0}}</text>
+        <text class="stat-label">已通过</text>
+      </view>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-completed">{{statistics.completed || 0}}</text>
+        <text class="stat-label">已完成</text>
+      </view>
+      <view class="stat-item" bindtap="navigateToMyReservations">
+        <text class="stat-value stat-cancelled">{{statistics.cancelled || 0}}</text>
+        <text class="stat-label">已取消</text>
+      </view>
+    </view>
+  </view>
+
   <!-- 快捷入口 -->
   <view class="quick-menu">
     <view class="menu-item" bindtap="navigateToReservation">
@@ -93,32 +119,6 @@
         <view class="empty-action">
           <button class="empty-btn" bindtap="navigateToLaboratoryList">浏览全部实验室</button>
         </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 用户统计 -->
-  <view class="section statistics-section" wx:if="{{statistics}}">
-    <view class="section-header">
-      <text class="section-title">我的预约统计</text>
-      <text class="section-more" bindtap="navigateToMyReservations">查看详情 ></text>
-    </view>
-    <view class="statistics-grid">
-      <view class="stat-item" bindtap="navigateToMyReservations">
-        <text class="stat-value stat-pending">{{statistics.pending || 0}}</text>
-        <text class="stat-label">待审核</text>
-      </view>
-      <view class="stat-item" bindtap="navigateToMyReservations">
-        <text class="stat-value stat-approved">{{statistics.approved || 0}}</text>
-        <text class="stat-label">已通过</text>
-      </view>
-      <view class="stat-item" bindtap="navigateToMyReservations">
-        <text class="stat-value stat-completed">{{statistics.completed || 0}}</text>
-        <text class="stat-label">已完成</text>
-      </view>
-      <view class="stat-item" bindtap="navigateToMyReservations">
-        <text class="stat-value stat-cancelled">{{statistics.cancelled || 0}}</text>
-        <text class="stat-label">已取消</text>
       </view>
     </view>
   </view>

@@ -34,3 +34,15 @@ export const deleteFile = (path) => {
     params: { path }
   })
 }
+
+// 上传实验室图片
+export const uploadLabImage = (formData) => {
+  return request({
+    url: '/api/file/upload-lab-image',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
