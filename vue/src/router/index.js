@@ -72,6 +72,12 @@ const routes = [
         name: 'CreditManagement',
         component: () => import('@/views/CreditManagement.vue'),
         meta: { title: '信誉分管理', icon: 'Star' }
+      },
+      {
+        path: 'my-credit',
+        name: 'MyCredit',
+        component: () => import('@/views/MyCredit.vue'),
+        meta: { title: '我的信誉分', icon: 'User' }
       }
     ]
   }

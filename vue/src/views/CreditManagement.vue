@@ -63,14 +63,14 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="creditScore" label="信誉分" width="100" align="center">
+        <el-table-column label="信誉分" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getCreditLevelTag(row.creditScore)" size="small">
               {{ row.creditScore }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="creditLevel" label="信用等级" width="100">
+        <el-table-column label="信用等级" width="100">
           <template #default="{ row }">
             <el-tag :type="getCreditLevelColor(row.creditLevel)" size="small">
               {{ getCreditLevelText(row.creditLevel) }}
@@ -206,6 +206,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, Document, Edit } from '@element-plus/icons-vue'
 import { getUserList } from '@/api/user'
 import { getUserCredit, getUserCreditLogs, adjustUserCredit } from '@/api/credit'
+import { useUserStore } from '@/store'
+
+const userStore = useUserStore()
 
 const loading = ref(false)
 const logsLoading = ref(false)
@@ -253,6 +256,11 @@ const adjustRules = {
 
 // 获取当前用户信息（用于判断是否为超级管理员）
 const currentUser = ref(null)
+
+// 在组件挂载时获取当前用户信息
+const loadCurrentUser = () => {
+  currentUser.value = userStore.userInfo
+}
 
 const getUserTypeTag = (userType) => {
   const typeMap = {
@@ -313,12 +321,16 @@ const loadUserList = async () => {
       users.map(async (user) => {
         try {
           const creditRes = await getUserCredit(user.id)
+          // 根据 API 文档，返回数据结构为 { credit: {...}, stats: {...} }
+          const creditData = creditRes.data?.credit || creditRes.data
+          const score = creditData?.score || 100
           return {
             ...user,
-            creditScore: creditRes.data?.score || 100,
-            creditLevel: calculateCreditLevel(creditRes.data?.score || 100)
+            creditScore: score,
+            creditLevel: calculateCreditLevel(score)
           }
         } catch (error) {
+          console.error(`获取用户 ${user.id} 信誉分失败:`, error)
           return {
             ...user,
             creditScore: 100,
@@ -449,6 +461,7 @@ const handlePageChange = () => {
 }
 
 onMounted(() => {
+  loadCurrentUser()
   loadUserList()
 })
 </script>

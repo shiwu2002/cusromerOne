@@ -121,11 +121,45 @@ Page({
       const response = await api.credit.getCreditRules();
       const rulesData = response.data || {};
 
+      // API 返回的 addRules 和 subtractRules 是对象，需要转换为数组
+      const addRulesArray = [];
+      if (rulesData.addRules) {
+        Object.keys(rulesData.addRules).forEach(key => {
+          addRulesArray.push({
+            description: key,
+            score: rulesData.addRules[key]
+          });
+        });
+      }
+
+      const deductRulesArray = [];
+      if (rulesData.subtractRules) {
+        Object.keys(rulesData.subtractRules).forEach(key => {
+          deductRulesArray.push({
+            description: key,
+            score: Math.abs(rulesData.subtractRules[key]) // 确保为正数
+          });
+        });
+      }
+
+      // levels 是对象，键为等级数字，值为等级描述字符串
+      const levelsArray = [];
+      if (rulesData.levels) {
+        Object.keys(rulesData.levels).forEach(key => {
+          const levelInfo = rulesData.levels[key];
+          // 解析等级描述字符串，如 "差 (0-59 分) - 禁止预约"
+          levelsArray.push({
+            name: levelInfo.split(' ')[0], // 提取等级名称
+            range: levelInfo.split(' ').slice(1).join(' ') // 提取分数范围和权限
+          });
+        });
+      }
+
       this.setData({
         rules: {
-          addRules: rulesData.addRules || [],
-          deductRules: rulesData.deductRules || [],
-          levels: rulesData.levels || []
+          addRules: addRulesArray,
+          deductRules: deductRulesArray,
+          levels: levelsArray
         }
       });
     } catch (error) {

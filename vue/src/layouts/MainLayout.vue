@@ -62,6 +62,11 @@
           <el-icon><Star /></el-icon>
           <template #title>信誉分管理</template>
         </el-menu-item>
+        
+        <el-menu-item index="/my-credit">
+          <el-icon><User /></el-icon>
+          <template #title>我的信誉分</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
